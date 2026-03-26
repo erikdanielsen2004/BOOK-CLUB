@@ -6,7 +6,7 @@ const logger = require('morgan');
 const mongoose = require('mongoose');
 const app = express();
 
-const authRouter = require('./routes/auth');
+const authRouter = require('./routes/auth.js');
 
 const mongoURI = 'no peeking';
 
