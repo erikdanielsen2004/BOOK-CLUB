@@ -8,13 +8,13 @@ const router = express.Router();
 // @route   /signup
 // @desc    Register user
 // @access  Public
-router.post('/', async (req, res) => {
+router.post('/signup', async (req, res) => {
     try {
         const { firstName, lastName, email, passwordHash } = req.body;
 
         // 1. Validate input
         if (!firstName || !lastName || !email || !passwordHash) {
-            return res.status(400).json({ msg: "All fields are required" });
+            return res.status(400).json({ message: "All fields are required" });
         }
         /*
         if (passwordHash.length < 6) {
@@ -24,25 +24,23 @@ router.post('/', async (req, res) => {
         // 2. Check if user exists
         let existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ msg: "User already exists" });
+            return res.status(400).json({ message: "User already exists" });
         }
         /*
         // 3. Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         */
-        /*
+        
         // 4. Create user
         user = new User({
             firstName,
             lastName,
             email,
-            password: hashedPassword
+            passwordHash //hashedPassword
         });
         await user.save();
-        */
-
-        const user = await User.create(req.body);
+        
         /*
         // 5. Create JWT
         const payload = {
