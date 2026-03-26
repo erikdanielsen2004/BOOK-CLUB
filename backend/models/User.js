@@ -1,25 +1,60 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
     {
-        name: {
+        firstName: {
             type: String,
             required: true,
-            trim: true,
+            trim: true
+        },
+        lastName: {
+            type: String,
+            required: true,
+            trim: true
         },
         email: {
             type: String,
             required: true,
             unique: true,
-            lowercase: true,
+            trim: true,
+            lowercase: true
         },
-        password: {
+        passwordHash: {
             type: String,
-            required: true,
-            minlength: 6,
+            required: true
         },
+        joinedGroups: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Group'
+            }
+        ],
+        createdGroups: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Group'
+            }
+        ],
+        hasRead: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Book'
+            }
+        ],
+        reading: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Book'
+            }
+        ],
+        wantsToRead: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Book'
+            }
+        ]
     },
     { timestamps: true }
 );
 
-export default mongoose.model("User", userSchema);
+module.exports = mongoose.model('User', userSchema);
