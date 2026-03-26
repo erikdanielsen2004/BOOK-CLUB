@@ -1,22 +1,19 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var mongoose = require('mongoose');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const mongoose = require('mongoose');
+const app = express();
 
-
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
 
 const mongoURI = 'mongodb+srv://frankiearisso721:Frankie123%21@bookapp.d6di0sl.mongodb.net/bookclubdb?retryWrites=true&w=majority&appName=BookApp';
 
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
-
-var app = express();
-
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
