@@ -74,4 +74,4 @@ router.post("/signup", async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;
