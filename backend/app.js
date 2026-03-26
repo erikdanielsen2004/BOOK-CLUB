@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const app = express();
 
 const authRouter = require('./routes/auth.js');
+app.use(express.json());
 
 const mongoURI = 'no peeking';
 
