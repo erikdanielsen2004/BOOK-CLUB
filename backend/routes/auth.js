@@ -31,7 +31,7 @@ router.post('/signup', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         */
-        
+
         // 4. Create user
         const user = new User({
             firstName,
@@ -40,7 +40,7 @@ router.post('/signup', async (req, res) => {
             passwordHash //hashedPassword
         });
         await user.save();
-        
+
         /*
         // 5. Create JWT
         const payload = {
@@ -79,6 +79,6 @@ router.get('/login', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "fail" });
     }
-}
+});
 
 module.exports = router;
