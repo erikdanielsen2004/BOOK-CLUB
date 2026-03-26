@@ -1,3 +1,5 @@
+console.log("This file is running");
+
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
@@ -48,3 +50,40 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port ${PORT}"));
 
 module.exports = app;
+
+
+// DO NOT USE THIS CODE
+
+// const express = require('express');
+// const mongoose = require('mongoose');
+// const app = express();
+// const path = require('path');
+
+// const authRouter = require('./routes/auth.js');
+
+// const mongoURI = 'no peeking';
+
+// mongoose.connect(mongoURI)
+//   .then(() => console.log('MongoDB connected'))
+//   .catch((err) => console.error('MongoDB connection error:', err));
+
+// // Middleware
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
+
+// // API routes FIRST
+// app.use('/api/auth', authRouter);
+
+// // Serve React build (make sure this path is correct)
+// app.use(express.static(path.join(__dirname, 'public')));
+
+// // Catch-all: send React app for any non-API route
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// });
+
+// // Port
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// module.exports = app;
