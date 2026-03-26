@@ -6,8 +6,7 @@ const logger = require('morgan');
 const mongoose = require('mongoose');
 const app = express();
 
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
+const authRouter = require('./routes/auth');
 
 const mongoURI = 'mongodb+srv://frankiearisso721:Frankie123%21@bookapp.d6di0sl.mongodb.net/bookclubdb?retryWrites=true&w=majority&appName=BookApp';
 
@@ -25,8 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/', authRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
