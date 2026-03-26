@@ -10,10 +10,10 @@ const router = express.Router();
 // @access  Public
 router.post("/signup", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { firstName, lastName, email, passwordHash } = req.body;
 
         // 1. Validate input
-        if (!name || !email || !password) {
+        if (!firstName || !lastName || !email || !passwordHash) {
             return res.status(400).json({ msg: "All fields are required" });
         }
 
@@ -30,14 +30,15 @@ router.post("/signup", async (req, res) => {
         // 3. Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        
+        */
+        /*
         // 4. Create user
         user = new User({
-            name,
+            firstName,
+            lastName,
             email,
             password: hashedPassword
         });
-        
         await user.save();
         */
 
@@ -60,7 +61,8 @@ router.post("/signup", async (req, res) => {
             token,
             user: {
                 id: user.id,
-                name: user.name,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
             },
         });
