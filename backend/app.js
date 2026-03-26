@@ -8,7 +8,7 @@ const app = express();
 
 const authRouter = require('./routes/auth');
 
-const mongoURI = 'mongodb+srv://frankiearisso721:Frankie123%21@bookapp.d6di0sl.mongodb.net/bookclubdb?retryWrites=true&w=majority&appName=BookApp';
+const mongoURI = 'no peeking';
 
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connected'))
