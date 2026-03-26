@@ -43,7 +43,7 @@ router.post("/signup", async (req, res) => {
         */
 
         const user = await User.create(req.body);
-
+        /*
         // 5. Create JWT
         const payload = {
             user: {
@@ -66,9 +66,11 @@ router.post("/signup", async (req, res) => {
                 email: user.email,
             },
         });
+        */
+        res.status(200).json(user);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send("Server error");
+        res.status(500).json({ message: "Server error" });
     }
 });
 
