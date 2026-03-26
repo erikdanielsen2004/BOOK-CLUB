@@ -1,0 +1,70 @@
+import express from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
+const router = express.Router();
+
+// @route   POST /api/auth/signup
+// @desc    Register user
+// @access  Public
+router.post("/signup", async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        // 1. Validate input
+        if (!name || !email || !password) {
+            return res.status(400).json({ msg: "All fields are required" });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ msg: "Password must be at least 6 characters" });
+        }
+
+        // 2. Check if user exists
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ msg: "User already exists" });
+        }
+
+        // 3. Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // 4. Create user
+        user = new User({
+            name,
+            email,
+            password: hashedPassword,
+        });
+
+        await user.save();
+
+        // 5. Create JWT
+        const payload = {
+            user: {
+                id: user.id,
+            },
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+        });
+
+        // 6. Send response
+        res.status(201).json({
+            msg: "User registered successfully",
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+export default router;
