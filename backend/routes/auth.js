@@ -5,7 +5,7 @@ const User require("../models/User.js");
 
 const router = express.Router();
 
-// @route   POST /api/auth/signup
+// @route   /signup
 // @desc    Register user
 // @access  Public
 router.post("/signup", async (req, res) => {
@@ -16,11 +16,11 @@ router.post("/signup", async (req, res) => {
         if (!firstName || !lastName || !email || !passwordHash) {
             return res.status(400).json({ msg: "All fields are required" });
         }
-
-        if (password.length < 6) {
+        /*
+        if (passwordHash.length < 6) {
             return res.status(400).json({ msg: "Password must be at least 6 characters" });
         }
-
+        */
         // 2. Check if user exists
         let existingUser = await User.findOne({ email });
         if (existingUser) {
