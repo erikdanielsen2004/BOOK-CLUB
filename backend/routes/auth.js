@@ -74,10 +74,12 @@ router.post('/signup', async (req, res) => {
 
 router.get('/login', async (req, res) => {
     try {
-        const user = await User.find({});
-        res.status(200).json(user);
+        const { email, passwordHash } = req.body;
+        const user = await User.findOne({ email, passwordHash });
+        if (!user) return res.status(401).json({ message: "Email or password is incorrect"})
+        res.status(200).json({ message: "Success", user});
     } catch (error) {
-        res.status(500).json({ message: "fail" });
+        res.status(500).json({ message: "Server error" });
     }
 });
 
