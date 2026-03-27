@@ -72,7 +72,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-router.get('/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { email, passwordHash } = req.body;
         if (!email || !passwordHash) return res.status(400).json({ message: "Cannot have empty fields"})
