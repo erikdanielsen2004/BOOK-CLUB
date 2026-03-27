@@ -75,6 +75,7 @@ router.post('/signup', async (req, res) => {
 router.get('/login', async (req, res) => {
     try {
         const { email, passwordHash } = req.body;
+        if (!email || !passwordHash) return res.status(400).json({ message: "Cannot have empty fields"})
         const user = await User.findOne({ email, passwordHash });
         if (!user) return res.status(401).json({ message: "Email or password is incorrect"})
         res.status(200).json({ message: "Success", user});
