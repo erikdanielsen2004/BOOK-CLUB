@@ -1,7 +1,11 @@
+import styles from './PageTitle.module.css';
+
 function PageTitle()
 {
    return(
-     <h1 id="title">Book Club</h1>
+          <h1 id="title" className={styles.titleContainer}>
+            Welcome to the Book Club
+          </h1>
    );
 };
 

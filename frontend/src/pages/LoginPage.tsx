@@ -1,13 +1,20 @@
 import PageTitle from '../components/PageTitle.tsx';
-import Login from '../components/Login.tsx';
+import NavBar from '../components/NavBar.tsx';
+import styles from './LoginPage.module.css';
+import BookThumbnail from '../components/BookThumbnail';
+
 
 const LoginPage = () =>
 {
 
     return(
-      <div>
-        <PageTitle />
-        <Login />
+        <div className={styles.wrapper}>
+           <NavBar />
+           
+           <main className={styles.wrapper2}>
+            <PageTitle />
+            <BookThumbnail />
+           </main>
       </div>
     );
 };

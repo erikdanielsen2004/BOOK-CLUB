@@ -1,0 +1,22 @@
+.titleContainer {
+    display: flex;
+    text-align: left;
+    color: #FFF8F2;
+    margin-top: 100px;
+    margin-left: 140px;
+    font-size: 80px;
+    width: 100px;
+}
+
+@media (max-width: 600px) {
+    .titleContainer {
+        font-size: 2.7rem;
+        text-align: center;
+        display: block;
+        margin-top: 200px;
+        margin-right: auto;
+        margin-left: auto;
+        padding: 20px;
+        width: 370px;
+    }
+}

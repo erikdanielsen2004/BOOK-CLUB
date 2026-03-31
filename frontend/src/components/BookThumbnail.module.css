@@ -1,0 +1,32 @@
+.bookCover {
+    border-radius: 20px;
+    width: 300px;
+    height: 500px;
+    object-fit: cover;
+    margin-left: -150px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 10px 10px 5px #2c2c2c;
+    
+    
+}
+
+.bookCover:nth-child(1) {
+    margin-left: 0;
+    z-index: 3;
+}
+
+.bookCover:nth-child(2) {
+    z-index: 2;
+}
+
+.bookCover:nth-child(3) {
+    z-index: 1;
+}
+
+.bookGrid {
+    display: flex;
+    justify-content: end;
+    margin-top: 50px;
+    margin-right: 90px;
+}
