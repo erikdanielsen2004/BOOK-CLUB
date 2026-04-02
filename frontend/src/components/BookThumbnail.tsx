@@ -1,12 +1,22 @@
 
 import { useEffect, useState } from 'react';
-import styles from './BookThumbnail.module.css';
+import styles from '../styles/BookThumbnail.module.css';
+
+interface Book {
+  id: string;
+  volumeInfo: {
+    title: string;
+    imageLinks?: {
+      thumbnail: string;
+    };
+  };
+}
 
 function BookThumbnail() {
-    const [books, setBooks] = useState([]);
+    const [books, setBooks] = useState<Book[]>([]);
 
     useEffect(() => {
-     
+
       if (books.length > 0) return;
 
       const apiKey = import.meta.env.VITE_BOOKS_API_KEY;
