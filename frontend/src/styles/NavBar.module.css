@@ -1,10 +1,14 @@
 .navContainer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 100;
     display: flex;
     justify-content: flex-end;
-    align-items: right;
+    align-items: center;
     gap: 15px;
-    margin-right: 20px;
-    margin-top: 20px;
+    padding: 16px 20px;
 }
 
 .btn2 {
@@ -12,18 +16,28 @@
     color: #FFF8F2;
     border: 2px solid #2C2C2C;
     border-radius: 5px;
-    padding: 5px;
-    padding-right: 10px;
-    padding-left: 10px;
-    
+    padding: 5px 10px;
     font-family: 'PT Mono', monospace;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn2:hover {
+    background-color: #444444;
+    border-color: #444444;
 }
 
 .btn {
-    background-color: #8C2F39;
+    background-color: transparent;
     color: #FFF8F2;
     border: 0px;
     font-family: 'PT Mono', monospace;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.btn:hover {
+    opacity: 0.75;
 }
 
 @media (max-width: 600px) {
@@ -32,7 +46,6 @@
     }
     .navContainer {
         justify-content: center;
-        margin: 0;
     }
     .btn {
         font-size: 20px;
