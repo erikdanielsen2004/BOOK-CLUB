@@ -1,13 +1,12 @@
 .bookCover {
     border-radius: 20px;
-    width: 300px;
+    width: 320px;
     height: 500px;
     object-fit: cover;
-    margin-left: -150px;
+    margin-left: -170px;
     transition: all 0.3s ease;
     position: relative;
-    box-shadow: 10px 10px 5px #2c2c2c;
-    
+    box-shadow: 10px 10px 5px #2c2c2c; /*how can we improve this*/
     
 }
 
@@ -18,10 +17,14 @@
 
 .bookCover:nth-child(2) {
     z-index: 2;
+    height: 480px;
+    margin-top: 10px;
 }
 
 .bookCover:nth-child(3) {
     z-index: 1;
+    height: 460px;
+    margin-top: 15px;
 }
 
 .bookGrid {

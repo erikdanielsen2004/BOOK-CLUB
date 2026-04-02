@@ -6,6 +6,7 @@
     margin-left: 140px;
     font-size: 80px;
     width: 100px;
+    transition: margin-left 0.5s ease-in-out;
 }
 
 @media (max-width: 600px) {
