@@ -10,6 +10,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 */
 const authRouter = require('./routes/auth.js');
+const userBooksRouter = require('./routes/userBooks');
 
 const mongoURI = 'no peeking';
 
@@ -28,6 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 // app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/auth', authRouter);
+app.use('/api/user-books', userBooksRouter);
 /*
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
