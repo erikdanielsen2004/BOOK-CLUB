@@ -58,7 +58,9 @@ const Login: React.FC = () => {
             Book Club!
           </h1>
         </div>
+          
 
+          
         {/* Right — login card */}
         <div className="login-page__right">
           <div className="login-card">
@@ -115,6 +117,8 @@ const Login: React.FC = () => {
             <p className="login-card__footer">
               Don't have an account?{" "}
               <Link to="/register">Sign up</Link>
+          <br /> <br />
+          <Link to ="/LoginPage">Back to Main</Link>
             </p>
           </div>
         </div>

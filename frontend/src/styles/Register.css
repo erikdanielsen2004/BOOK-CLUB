@@ -18,11 +18,11 @@
 
 /* ── Left — heading ── */
 .register-page__left {
-  flex: 1;
+  display: none;
 }
 
 .register-page__heading {
-  font-family: 'Righteous', sans-serif;
+  font-family: 'PT Mono', monospace;
   font-size: clamp(2.8rem, 6vw, 5rem);
   font-weight: 800;
   line-height: 1.1;
@@ -53,7 +53,7 @@
   color: #1a0a0a;
   text-align: center;
   margin-bottom: 1.75rem;
-  font-family: Georgia, serif;
+  font-family: 'PT Mono', monospace;
 }
 
 /* ── Error message ── */

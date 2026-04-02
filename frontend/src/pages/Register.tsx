@@ -82,6 +82,7 @@ const Register: React.FC = () => {
                 <input
                   id="email"
                   type="email"
+                placeholder="Enter your email.."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -93,6 +94,7 @@ const Register: React.FC = () => {
                 <input
                   id="firstName"
                   type="text"
+                    placeholder="Your first name..."
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -104,6 +106,7 @@ const Register: React.FC = () => {
                 <input
                   id="lastName"
                   type="text"
+                placeholder="Your last name..."
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -115,6 +118,7 @@ const Register: React.FC = () => {
                 <input
                   id="password"
                   type="password"
+                    placeholder="Type in a secure password..."
                   value={passwordHash}
                   onChange={(e) => setPasswordHash(e.target.value)}
                   required
@@ -126,6 +130,7 @@ const Register: React.FC = () => {
                 <input
                   id="confirmPassword"
                   type="password"
+                    placeholder="Type in password again..."
                   value={confirmPassword}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
