@@ -2,16 +2,6 @@
 import { useEffect, useState } from 'react';
 import styles from '../styles/BookThumbnail.module.css';
 
-interface Book {
-  id: string;
-  volumeInfo: {
-    title: string;
-    imageLinks?: {
-      thumbnail: string;
-    };
-  };
-}
-
 function BookThumbnail() {
     const [books, setBooks] = useState<Book[]>([]);
 
