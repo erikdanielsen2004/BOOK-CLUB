@@ -3,14 +3,18 @@ import './App.css';
 
 import LoginPage from './pages/LoginPage';
 import BooksPage from './pages/BooksPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/books" element={<BooksPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/"         element={<LoginPage />} />
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/books"    element={<BooksPage />} />
+        <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
