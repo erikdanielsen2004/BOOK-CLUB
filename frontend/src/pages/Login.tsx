@@ -1,0 +1,126 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
+import "../styles/Login.css";
+
+const Login: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Form state
+  const [email, setEmail]               = useState("");
+  const [passwordHash, setPasswordHash] = useState("");
+  const [remember, setRemember]         = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+  const [loading, setLoading]           = useState(false);
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+
+    // TODO: email validation + havent actually tested this yet so could be buggy
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, passwordHash }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/dashboard"); //route to dashboard after successful login
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <NavBar />
+
+      <div className="login-page__inner">
+        {/* Left — welcome message */}
+        <div className="login-page__left">
+          <h1 className="login-page__heading">
+            Welcome<br />
+            to the<br />
+            Book Club!
+          </h1>
+        </div>
+
+        {/* Right — login card */}
+        <div className="login-page__right">
+          <div className="login-card">
+            <h2 className="login-card__title">Log In</h2>
+
+            {error && (
+              <div className="login-card__error">{error}</div>
+            )}
+
+            <form onSubmit={handleSubmit} className="login-card__form">
+              <div className="login-card__field">
+                <label htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Type in your email..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="login-card__field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="Type in your password..."
+                  value={passwordHash}
+                  onChange={(e) => setPasswordHash(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="login-card__remember">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                <label htmlFor="remember">Save my login information</label>
+              </div>
+
+              <button
+                type="submit"
+                className="login-card__btn"
+                disabled={loading}
+              >
+                {loading ? "Logging in..." : "Continue"}
+              </button>
+            </form>
+
+            <p className="login-card__footer">
+              Don't have an account?{" "}
+              <Link to="/register">Sign up</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
