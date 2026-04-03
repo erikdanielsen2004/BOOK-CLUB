@@ -1,87 +1,78 @@
 const express = require("express");
-// const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
 const User = require("../models/User.js");
 
 const router = express.Router();
 
-// @route   /signup
-// @desc    Register user
-// @access  Public
-router.post('/signup', async (req, res) => {
-    try {
-        const { firstName, lastName, email, passwordHash } = req.body;
+// SIGNUP
+router.post("/signup", async (req, res) => {
+  try {
+    const { firstName, lastName, email, passwordHash } = req.body;
 
-        // 1. Validate input
-        if (!firstName || !lastName || !email || !passwordHash) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        /*
-        if (passwordHash.length < 6) {
-            return res.status(400).json({ msg: "Password must be at least 6 characters" });
-        }
-        */
-        // 2. Check if user exists
-        let existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-        /*
-        // 3. Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        */
-
-        // 4. Create user
-        const user = new User({
-            firstName,
-            lastName,
-            email,
-            passwordHash //hashedPassword
-        });
-        await user.save();
-
-        /*
-        // 5. Create JWT
-        const payload = {
-            user: {
-                id: user.id,
-            },
-        };
-
-        const token = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: "7d",
-        });
-
-        // 6. Send response
-        res.status(201).json({
-            msg: "User registered successfully",
-            token,
-            user: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-            },
-        });
-        */
-        res.status(201).json({ message: "Success" });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ message: "Server error" });
+    if (!firstName || !lastName || !email || !passwordHash) {
+      return res.status(400).json({ message: "All fields are required" });
     }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = new User({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.toLowerCase().trim(),
+      passwordHash
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-router.post('/login', async (req, res) => {
-    try {
-        const { email, passwordHash } = req.body;
-        if (!email || !passwordHash) return res.status(400).json({ message: "Cannot have empty fields"})
-        const user = await User.findOne({ email, passwordHash });
-        if (!user) return res.status(401).json({ message: "Email or password is incorrect"})
-        res.status(200).json({ message: "Success", user});
-    } catch (error) {
-        res.status(500).json({ message: "Server error" });
+// LOGIN
+router.post("/login", async (req, res) => {
+  try {
+    const { email, passwordHash } = req.body;
+
+    if (!email || !passwordHash) {
+      return res.status(400).json({ message: "Cannot have empty fields" });
     }
+
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+      passwordHash
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Email or password is incorrect" });
+    }
+
+    res.status(200).json({
+      message: "Success",
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;
