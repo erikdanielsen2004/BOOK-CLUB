@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
 import './App.css';
 
-import LoginPage from './pages/LoginPage';
-import BooksPage from './pages/BooksPage';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import LoginPage from './pages/LoginPage.tsx';
+import BooksPage from './pages/BooksPage.tsx';
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
 
 function App() {
   return (

@@ -1,7 +1,7 @@
-import PageTitle from '../components/PageTitle';
-import NavBar from '../components/NavBar';
+import PageTitle from '../components/PageTitle.tsx';
+import NavBar from '../components/NavBar.tsx';
 import styles from '../styles/LoginPage.module.css';
-import BookThumbnail from '../components/BookThumbnail';
+import BookThumbnail from '../components/BookThumbnail.tsx';
 
 
 const LoginPage = () =>

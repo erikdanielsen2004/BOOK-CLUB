@@ -1,6 +1,6 @@
-import PageTitle from '../components/PageTitle';
-import LoggedInName from '../components/LoggedInName';
-import BookUI from '../components/BookUI';
+import PageTitle from '../components/PageTitle.tsx';
+import LoggedInName from '../components/LoggedInName.tsx';
+import BookUI from '../components/BookUI.tsx';
 
 const BooksPage = () =>
 {

@@ -1,7 +1,20 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import NavBar from "../components/NavBar";
+import NavBar from "../components/NavBar.tsx";
 import "../styles/Login.css";
+
+const app_name = 'mernbookclub.xyz';
+function buildPath(route:string) : string
+{
+    if (process.env.NODE_ENV != 'development')
+    {
+        return 'http://' + app_name + ':5000/' + route;
+    }
+    else
+    {
+        return 'http://localhost:5000/' + route;
+    }
+}
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
