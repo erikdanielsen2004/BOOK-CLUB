@@ -5,9 +5,7 @@
     object-fit: cover;
     margin-left: -170px;
     transition: all 0.3s ease;
-    position: relative;
-    box-shadow: 10px 10px 5px #2c2c2c; /*how can we improve this*/
-    
+    position: relative;    
 }
 
 .bookCover:nth-child(1) {
