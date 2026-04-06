@@ -1,0 +1,200 @@
+/* ── Layout ── */
+.shelf-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f0ebe3;
+}
+
+.shelf-main {
+  margin-left: 260px;
+  flex: 1;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* ── Heading ── */
+.shelf-heading {
+  font-family: 'Courier New', monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #8b2323;
+}
+
+/* ── Stat Cards ── */
+.shelf-stats {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.shelf-stat {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-width: 160px;
+}
+
+.shelf-stat__number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a0a0a;
+  font-family: Georgia, serif;
+}
+
+.shelf-stat__label {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Tabs ── */
+.shelf-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.shelf-tab {
+  background: transparent;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.shelf-tab:hover {
+  color: #8b2323;
+}
+
+.shelf-tab--active {
+  color: #8b2323;
+  border-bottom-color: #8b2323;
+  font-weight: 700;
+}
+
+/* ── Search ── */
+.shelf-search {
+  position: relative;
+  max-width: 280px;
+}
+
+.shelf-search input {
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+  background: white;
+  font-size: 0.9rem;
+  color: #1a0a0a;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.shelf-search input:focus {
+  border-color: #8b2323;
+}
+
+.shelf-search input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.shelf-search__icon {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* ── Book Grid ── */
+.shelf-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.shelf-empty {
+  color: rgba(0, 0, 0, 0.4);
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+/* ── Book Card ── */
+.shelf-book {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.shelf-book:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.shelf-book__cover {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.shelf-book__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shelf-book__cover-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.shelf-book__info {
+  padding: 0.6rem 0.75rem;
+}
+
+.shelf-book__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1a0a0a;
+  font-family: Georgia, serif;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shelf-book__author {
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .shelf-main {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+}
