@@ -86,6 +86,9 @@ router.post("/join/:userId/:groupId", async (req, res) => {
         const group = await Group.findById(groupId).session(session);
         if (!user || !group) return abortAndEnd(session, res, 404, "User or group not found.");
 
+        const isMember = group.members.some(member => member.toString() === userId);
+        if (isMember) return abortAndEnd(session, res, 409, "User is already in this group.");
+        
         group.members = [...new Set([...group.members, user._id])];
         user.joinedGroups = [...new Set([...user.joinedGroups, group._id])];
 
