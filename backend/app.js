@@ -10,7 +10,8 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 */
 const authRouter = require('./routes/auth.js');
-const userBooksRouter = require('./routes/userBooks');
+const userBooksRouter = require('./routes/userBooks.js');
+const groupMainRouter = require('./routes/groupMain.js');
 
 const mongoURI = 'no peeking';
 
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/auth', authRouter);
 app.use('/api/user-books', userBooksRouter);
+app.use('/api/group-main', groupMainRouter);
 /*
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
