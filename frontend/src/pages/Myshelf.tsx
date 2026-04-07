@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/Sidebar.tsx";
 import "../styles/MyShelf.css";
 
 // Types

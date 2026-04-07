@@ -1,4 +1,4 @@
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/Sidebar.tsx";
 import "../styles/Dashboard.css";
 
 // types - replace

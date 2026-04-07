@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
 import './App.css';
 
-import LoginPage from './pages/LoginPage';
-import BooksPage from './pages/BooksPage';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import MyShelf from './pages/Myshelf';
+import LoginPage from './pages/LoginPage.tsx';
+import BooksPage from './pages/BooksPage.tsx';
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import MyShelf from './pages/Myshelf.tsx';
 
 function App() {
   return (
