@@ -21,6 +21,5 @@ app.use('/api/auth', authRouter);
 app.use('/api/group-main', groupMainRouter);
 
 const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 module.exports = app;
