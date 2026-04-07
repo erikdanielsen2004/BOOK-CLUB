@@ -1,17 +1,134 @@
-.wrapper {
+.page {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #f6f1eb;
 }
 
-.wrapper2 {
+.hero {
+    background-color: #9c2f3b;
+    min-height: 78vh;
+    width: 100%;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    margin-top: 50px;
+    flex-direction: column;
+    padding: 0 3.5rem 0 3.5rem;
+    box-sizing: border-box;
+}
+
+.heroContent {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+.textBlock {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.title {
+    color: #f8f1ea;
+    font-size: clamp(4.5rem, 8vw, 7.5rem);
+    line-height: 0.95;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.booksBlock {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+}
+
+.bottomSection {
+    background-color: #f6f1eb;
+    width: 100%;
+    margin: 0;
+    padding: 4.5rem 2rem 5rem 2rem;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bottomText {
+    margin: 0;
+    color: #2b2b2b;
+    text-align: center;
+    font-size: clamp(1.6rem, 2.6vw, 2.7rem);
+    line-height: 1.2;
+    max-width: 900px;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+@media (max-width: 1200px) {
+    .hero {
+        padding: 0 2.5rem 0 2.5rem;
+    }
+
+    .heroContent {
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .hero {
+        min-height: auto;
+        padding: 0 1.5rem 0 1.5rem;
+    }
+
+    .heroContent {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+    }
+
+    .textBlock {
+        justify-content: center;
+    }
+
+    .title {
+        font-size: clamp(3.5rem, 12vw, 5.5rem);
+    }
+
+    .booksBlock {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .bottomSection {
+        padding: 3rem 1.5rem 3.5rem 1.5rem;
+    }
+
+    .bottomText {
+        font-size: clamp(1.4rem, 5vw, 2.2rem);
+    }
 }
 
 @media (max-width: 600px) {
-    .wrapper {
-        flex-direction: column-reverse;
+    .hero {
+        padding: 0 1rem 0 1rem;
+    }
+
+    .title {
+        font-size: clamp(3rem, 14vw, 4.5rem);
+    }
+
+    .bottomText {
+        font-size: 1.5rem;
     }
 }
