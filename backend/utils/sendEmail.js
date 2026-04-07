@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-export const sendVerificationEmail = async (email: string, token: string) => {
+const sendVerificationEmail = async (email, token) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
@@ -12,7 +12,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     },
   });
 
-  const baseUrl = process.env.FRONTEND_URL || 'https://mernbookclub.xyz';
+  const baseUrl = process.env.FRONTEND_URL;
   const url = `${baseUrl}/verify-email/${token}`;
 
   await transporter.sendMail({
@@ -32,3 +32,5 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     `,
   });
 };
+
+module.exports = sendVerificationEmail;
