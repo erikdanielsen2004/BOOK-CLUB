@@ -7,6 +7,7 @@ import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import MyShelf from './pages/Myshelf.tsx';
+import VerifyEmail from './pages/VerifyEmail.tsx';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/books"    element={<BooksPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/myshelf"   element={<MyShelf />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
