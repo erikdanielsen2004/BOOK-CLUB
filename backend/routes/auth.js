@@ -44,7 +44,7 @@ router.post("/signup", async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
-        await sendVerificationEmail(user.email, verificationToken);
+        try {await sendVerificationEmail(user.email, verificationToken);}catch(err){console.error("Bruh",err);}
 
         return res.status(201).json({
             message: "User registered successfully. Please check your email to verify your account.",
