@@ -6,32 +6,30 @@ import "../styles/Register.css";
 const Register: React.FC = () => {
   const navigate = useNavigate();
 
-  // Form state
-  const [email, setEmail]               = useState("");
-  const [firstName, setFirstName]       = useState("");
-  const [lastName, setLastName]         = useState("");
-  const [passwordHash, setPasswordHash] = useState("");
-  const [confirmPassword, setConfirm]   = useState("");
-  const [error, setError]               = useState<string | null>(null);
-  const [loading, setLoading]           = useState(false);
+  const [email, setEmail]             = useState("");
+  const [firstName, setFirstName]     = useState("");
+  const [lastName, setLastName]       = useState("");
+  const [password, setPassword]       = useState("");
+  const [confirmPassword, setConfirm] = useState("");
+  const [error, setError]             = useState<string | null>(null);
+  const [loading, setLoading]         = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (passwordHash !== confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
     setLoading(true);
 
-    // signup for user but havent actually tested
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName, lastName, passwordHash }),
+        body: JSON.stringify({ email, firstName, lastName, password }),
       });
 
       const data = await res.json();
@@ -43,7 +41,7 @@ const Register: React.FC = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      navigate("/login"); //after signup -> login page
+      navigate("/login");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -55,10 +53,7 @@ const Register: React.FC = () => {
     <div className="register-page">
       <NavBar />
 
-      {/* will change to match the second figma just place holder for now */}
-
       <div className="register-page__inner">
-        {/* Left */}
         <div className="register-page__left">
           <h1 className="register-page__heading">
             Welcome<br />
@@ -67,7 +62,6 @@ const Register: React.FC = () => {
           </h1>
         </div>
 
-        {/* Right — sign up card */}
         <div className="register-page__right">
           <div className="register-card">
             <h2 className="register-card__title">Sign Up</h2>
@@ -82,7 +76,7 @@ const Register: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                placeholder="Enter your email.."
+                  placeholder="Enter your email.."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -94,7 +88,7 @@ const Register: React.FC = () => {
                 <input
                   id="firstName"
                   type="text"
-                    placeholder="Your first name..."
+                  placeholder="Your first name..."
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -106,7 +100,7 @@ const Register: React.FC = () => {
                 <input
                   id="lastName"
                   type="text"
-                placeholder="Your last name..."
+                  placeholder="Your last name..."
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -118,9 +112,9 @@ const Register: React.FC = () => {
                 <input
                   id="password"
                   type="password"
-                    placeholder="Type in a secure password..."
-                  value={passwordHash}
-                  onChange={(e) => setPasswordHash(e.target.value)}
+                  placeholder="Type in a secure password..."
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
@@ -130,7 +124,7 @@ const Register: React.FC = () => {
                 <input
                   id="confirmPassword"
                   type="password"
-                    placeholder="Type in password again..."
+                  placeholder="Type in password again..."
                   value={confirmPassword}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
