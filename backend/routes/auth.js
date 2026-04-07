@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const User = require("../models/User.js");
-const sendVerificationEmail = require('../utils/sendEmail');
+const { sendVerificationEmail } = require('../utils/sendEmail.js');
 const router = express.Router();
 
 function sendError(res, status, message) { return res.status(status).json({ message }); }
@@ -103,7 +103,7 @@ router.post("/login", async (req, res) => {
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            { expiresIn: process.env.JWT_SIGNUP_EXPIRES_IN }
         );
 
         return res.status(200).json({
