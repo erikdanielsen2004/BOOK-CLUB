@@ -1,46 +1,42 @@
 const express = require("express");
-const mongoose = require('mongoose');
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const validator = require("validator");
 const User = require("../models/User.js");
 const router = express.Router();
 
-async function abortAndEnd(session, res, status, message) {
-    await session.abortTransaction();
-    session.endSession();
-    return res.status(status).json({ message });
-}
+function sendError(res, status, message) { return res.status(status).json({ message }); }
 
 router.post("/signup", async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    
     try {
-        const { firstName, lastName, email, passwordHash } = req.body;
+        const { firstName, lastName, email, password } = req.body;
 
-        if (!firstName || !lastName || !email || !passwordHash) {
-            return abortAndEnd(session, res, 400, "All fields are required.");
-        }
+        if (!firstName || !lastName || !email || !password) return sendError(res, 400, "All fields are required.");
+        if (!validator.isEmail(email)) return sendError(res, 400, "Invalid email.");
 
-        const existingUser = await User.findOne({ email: email.toLowerCase().trim() }).session(session);
-        if (existingUser) return abortAndEnd(session, res, 400, "User already exists.");
+        const baseEmail = email.toLowerCase().trim();
+        const existingUser = await User.findOne({ email: baseEmail });
+        if (existingUser) return sendError(res, 400, "User already exists.");
 
-        const salt = await bcrypt.genSalt(10);
-        const newHash = await bcrypt.hash(passwordHash, salt);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
-            email: email.toLowerCase().trim(),
-            newHash,
-            salt
+            email: baseEmail,
+            password: hashedPassword
         });
-        await user.save({ session });
+        await user.save();
 
-        await session.commitTransaction();
-        session.endSession();
+        const token = jwt.sign(
+            { id: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
 
         res.status(201).json({
             message: "User registered successfully.",
+            token,
             user: {
                 id: user._id,
                 firstName: user.firstName,
@@ -51,32 +47,36 @@ router.post("/signup", async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return abortAndEnd(session, res, 500, "Server error.");
+        if (error.code === 11000 || error.message.includes("duplicate key")) {
+            return sendError(res, 400, "User already exists.");
+        }
+        return sendError(res, 500, "Server error.");
     }
 });
 
 router.post("/login", async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    
     try {
-        const { email, passwordHash } = req.body;
+        const { email, password } = req.body;
 
-        if (!email || !passwordHash) {
-            return abortAndEnd(session, res, 400, "All fields are required.");
-        }
+        if (!email || !password) return sendError(res, 400, "All fields are required.");
 
-        const salt = User.findOne( {email: email.toLowerCase().trim()}, {_id: 0, salt: 1} ).session(session);
-        const newHash = await bcrypt.hash(passwordHash, salt);
+        const baseEmail = email.toLowerCase().trim();
 
-        const user = await User.findOne({ email: email.toLowerCase().trim(), newHash }).session(session);
-        if (!user) return abortAndEnd(session, res, 401, "Email or password is incorrect.");
+        const user = await User.findOne({ email: baseEmail });
+        if (!user) return sendError(res, 401, "Email or password is incorrect.");
 
-        await session.commitTransaction();
-        session.endSession();
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return sendError(res, 401, "Email or password is incorrect.");
+
+        const token = jwt.sign(
+            { id: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
 
         res.status(200).json({
             message: "Success",
+            token,
             user: {
                 id: user._id,
                 firstName: user.firstName,
@@ -87,7 +87,7 @@ router.post("/login", async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        return abortAndEnd(session, res, 500, "Server error.");
+        return sendError(res, 500, "Server error.");
     }
 });
 
