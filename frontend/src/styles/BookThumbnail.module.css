@@ -1,41 +1,72 @@
 .bookGrid {
     display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-    margin-top: 50px;
-    margin-right: 90px;
-    min-height: 520px;
+    justify-content: center;
+    align-items: center;
+    min-height: 540px;
+    width: 100%;
+    padding-right: 1rem;
+    box-sizing: border-box;
 }
 
 .bookCover {
-    border-radius: 20px;
-    width: 320px;
-    height: 500px;
+    width: clamp(180px, 18vw, 320px);
+    aspect-ratio: 2 / 3;
     object-fit: cover;
-    margin-left: -170px;
-    transition: all 0.3s ease;
+    border-radius: 20px;
+    margin-left: clamp(-95px, -6vw, -170px);
     position: relative;
-    background-color: #ddd;
-    flex-shrink: 0;
     display: block;
+    flex-shrink: 0;
+    background-color: #ddd;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+    transition: transform 0.3s ease;
 }
 
 .book1 {
     margin-left: 0;
     z-index: 3;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .book2 {
     z-index: 2;
-    height: 480px;
-    margin-top: 10px;
-    transform: translateY(10px);
+    transform: translateY(0) scale(0.97);
 }
 
 .book3 {
     z-index: 1;
-    height: 460px;
-    margin-top: 20px;
-    transform: translateY(20px);
+    transform: translateY(0) scale(0.94);
+}
+
+@media (max-width: 900px) {
+    .bookGrid {
+        min-height: 430px;
+        padding-right: 0;
+    }
+
+    .bookCover {
+        width: clamp(160px, 28vw, 240px);
+        margin-left: clamp(-70px, -10vw, -110px);
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .bookGrid {
+        min-height: 320px;
+    }
+
+    .bookCover {
+        width: clamp(120px, 30vw, 170px);
+        margin-left: -48px;
+        border-radius: 14px;
+    }
+
+    .book2 {
+        transform: translateY(0) scale(0.96);
+    }
+
+    .book3 {
+        transform: translateY(0) scale(0.92);
+    }
 }
