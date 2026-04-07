@@ -5,8 +5,9 @@ const Group = require("../models/Group.js");
 const router = express.Router();
 
 async function abortAndEnd(session, res, status, message) {
-    await session.abortTransaction();
-    session.endSession();
+    try { await session.abortTransaction(); }
+    catch (error) {}
+    finally { session.endSession(); }
     return res.status(status).json({ message });
 }
 
@@ -43,6 +44,7 @@ router.post("/create/:userId", async (req, res) => {
         return res.status(201).json({ message: "Group created successfully.", group });
 
     } catch (error) {
+        console.error(error.message);
         return abortAndEnd(session, res, 500, "Server error.");
     }
 });
@@ -71,6 +73,7 @@ router.delete("/delete/:userId/:groupId", async (req, res) => {
         return res.status(200).json({ message: "Group deleted successfully." });
 
     } catch (error) {
+        console.error(error.message);
         return abortAndEnd(session, res, 500, "Server error.");
     }
 });
@@ -100,6 +103,7 @@ router.post("/join/:userId/:groupId", async (req, res) => {
         return res.status(200).json({ message: "Group joined successfully." });
 
     } catch (error) {
+        console.error(error.message);
         return abortAndEnd(session, res, 500, "Server error.");
     }
 });
@@ -153,6 +157,7 @@ router.post("/leave/:userId/:groupId", async (req, res) => {
         return res.status(200).json(response);
 
     } catch (error) {
+        console.error(error.message);
         return abortAndEnd(session, res, 500, "Server error.");
     }
 });
