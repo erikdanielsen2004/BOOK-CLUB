@@ -1,6 +1,12 @@
 const nodemailer = require('nodemailer');
 
 const sendVerificationEmail = async (email, token) => {
+  
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error("FAIL; SKIP");
+    return;
+  }
+  
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
