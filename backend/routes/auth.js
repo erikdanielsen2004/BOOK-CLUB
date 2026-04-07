@@ -12,12 +12,20 @@ router.post("/signup", async (req, res) => {
     try {
         const { firstName, lastName, email, password } = req.body;
 
-        if (!firstName || !lastName || !email || !password) return sendError(res, 400, "All fields are required.");
-        if (!validator.isEmail(email)) return sendError(res, 400, "Invalid email.");
+        if (!firstName || !lastName || !email || !password) {
+            return sendError(res, 400, "All fields are required.");
+        }
+
+        if (!validator.isEmail(email)) {
+            return sendError(res, 400, "Invalid email.");
+        }
 
         const baseEmail = email.toLowerCase().trim();
+
         const existingUser = await User.findOne({ email: baseEmail });
-        if (existingUser) return sendError(res, 400, "User already exists.");
+        if (existingUser) {
+            return sendError(res, 400, "User already exists.");
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -28,6 +36,7 @@ router.post("/signup", async (req, res) => {
             password: hashedPassword,
             isVerified: false
         });
+
         await user.save();
 
         const token = jwt.sign(
@@ -35,13 +44,14 @@ router.post("/signup", async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_AUTH_EXPIRES_IN }
         );
-
-        const verificationToken = jwt.sign(
+                const verificationToken = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
-        try {await sendVerificationEmail(user.email, verificationToken);}catch(err){console.error("Bruh",err);}
+
+        sendVerificationEmail(user.email, verificationToken)
+            .catch((err) => console.error("Email send failed.", err));
 
         return res.status(201).json({
             message: "User registered successfully. Please check your email to verify your account.",
@@ -55,13 +65,14 @@ router.post("/signup", async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error.message);
+        console.error(error);
         if (error.code === 11000 || error.message.includes("duplicate key")) {
             return sendError(res, 400, "User already exists.");
         }
         return sendError(res, 500, "Server error.");
     }
 });
+
 
 router.get("/verify-email/:token", async (req, res) => {
     try {
