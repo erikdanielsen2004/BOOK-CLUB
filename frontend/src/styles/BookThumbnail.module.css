@@ -1,3 +1,12 @@
+.bookGrid {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    margin-top: 50px;
+    margin-right: 90px;
+    min-height: 520px;
+}
+
 .bookCover {
     border-radius: 20px;
     width: 320px;
@@ -5,29 +14,28 @@
     object-fit: cover;
     margin-left: -170px;
     transition: all 0.3s ease;
-    position: relative;    
+    position: relative;
+    background-color: #ddd;
+    flex-shrink: 0;
+    display: block;
 }
 
-.bookCover:nth-child(1) {
+.book1 {
     margin-left: 0;
     z-index: 3;
+    transform: translateY(0);
 }
 
-.bookCover:nth-child(2) {
+.book2 {
     z-index: 2;
     height: 480px;
     margin-top: 10px;
+    transform: translateY(10px);
 }
 
-.bookCover:nth-child(3) {
+.book3 {
     z-index: 1;
     height: 460px;
-    margin-top: 15px;
-}
-
-.bookGrid {
-    display: flex;
-    justify-content: end;
-    margin-top: 50px;
-    margin-right: 90px;
+    margin-top: 20px;
+    transform: translateY(20px);
 }
