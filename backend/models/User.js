@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
         isVerified: {
             type: Boolean,
             default: false
-        }
+        },
         joinedGroups: [
             {
                 type: mongoose.Schema.Types.ObjectId,
