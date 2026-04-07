@@ -3,42 +3,25 @@ import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar.tsx";
 import "../styles/Login.css";
 
-const app_name = 'mernbookclub.xyz';
-function buildPath(route:string) : string
-{
-    if (process.env.NODE_ENV != 'development')
-    {
-        return 'http://' + app_name + ':5000/' + route;
-    }
-    else
-    {
-        return 'http://localhost:5000/' + route;
-    }
-}
-
 const Login: React.FC = () => {
   const navigate = useNavigate();
 
-  // Form state
-  const [email, setEmail]               = useState("");
-  const [passwordHash, setPasswordHash] = useState("");
-  const [remember, setRemember]         = useState(false);
-  const [error, setError]               = useState<string | null>(null);
-  const [loading, setLoading]           = useState(false);
-
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-
-    // TODO: email validation + havent actually tested this yet so could be buggy
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, passwordHash }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -50,7 +33,7 @@ const Login: React.FC = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      navigate("/dashboard"); //route to dashboard after successful login
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -63,7 +46,6 @@ const Login: React.FC = () => {
       <NavBar />
 
       <div className="login-page__inner">
-        {/* Left — welcome message */}
         <div className="login-page__left">
           <h1 className="login-page__heading">
             Welcome<br />
@@ -71,10 +53,7 @@ const Login: React.FC = () => {
             Book Club!
           </h1>
         </div>
-          
 
-          
-        {/* Right — login card */}
         <div className="login-page__right">
           <div className="login-card">
             <h2 className="login-card__title">Log In</h2>
@@ -102,8 +81,8 @@ const Login: React.FC = () => {
                   id="password"
                   type="password"
                   placeholder="Type in your password..."
-                  value={passwordHash}
-                  onChange={(e) => setPasswordHash(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
@@ -130,8 +109,8 @@ const Login: React.FC = () => {
             <p className="login-card__footer">
               Don't have an account?{" "}
               <Link to="/register">Sign up</Link>
-          <br /> <br />
-          <Link to ="/LoginPage">Back to Main</Link>
+              <br /><br />
+              <Link to="/LoginPage">Back to Main</Link>
             </p>
           </div>
         </div>
