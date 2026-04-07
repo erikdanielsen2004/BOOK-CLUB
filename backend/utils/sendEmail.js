@@ -1,4 +1,3 @@
-
 import nodemailer from 'nodemailer';
 
 export const sendVerificationEmail = async (email: string, token: string) => {
@@ -12,7 +11,6 @@ export const sendVerificationEmail = async (email: string, token: string) => {
       pass: process.env.EMAIL_PASS,
     },
   });
-
 
   const baseUrl = process.env.FRONTEND_URL || 'https://mernbookclub.xyz';
   const url = `${baseUrl}/verify-email/${token}`;
