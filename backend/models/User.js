@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        isVerified: {
+            type: Boolean,
+            default: false
+        }
         joinedGroups: [
             {
                 type: mongoose.Schema.Types.ObjectId,

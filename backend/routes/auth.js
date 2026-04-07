@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const User = require("../models/User.js");
 const router = express.Router();
+const { sendVerificationEmail } = require('../utils/sendEmail');
 
 function sendError(res, status, message) { return res.status(status).json({ message }); }
 
@@ -25,17 +26,20 @@ router.post("/signup", async (req, res) => {
             lastName: lastName.trim(),
             email: baseEmail,
             password: hashedPassword
+            isVerified: false
         });
         await user.save();
 
-        const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
-        );
+        const verificationToken = jwt.sign(
+                { id: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h'}
+            );
+        
+        await sendVerificationEmail(user.email, verificationToken);
 
         res.status(201).json({
-            message: "User registered successfully.",
+            message: "User registered successfully. Please check your email to verify your account.",
             token,
             user: {
                 id: user._id,
@@ -54,6 +58,28 @@ router.post("/signup", async (req, res) => {
     }
 });
 
+router.get("/verify-email/:token", async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Verify the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Update  user
+        const user = await User.findById(decoded.id);
+        if (!user) return sendError(res, 404, "User not found.");
+        
+        if (user.isVerified) return res.status(200).json({ message: "Email already verified." });
+
+        user.isVerified = true;
+        await user.save();
+
+        res.status(200).json({ message: "Email verified successfully! You can now log in." });
+    } catch (error) {
+        return sendError(res, 400, "Invalid or expired verification link.");
+    }
+});
+
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -64,6 +90,10 @@ router.post("/login", async (req, res) => {
 
         const user = await User.findOne({ email: baseEmail });
         if (!user) return sendError(res, 401, "Email or password is incorrect.");
+        
+        if (!user.isVerified) {
+            return sendError(res, 401, "Please verify your email!");
+        }
 
         const match = await bcrypt.compare(password, user.password);
         if (!match) return sendError(res, 401, "Email or password is incorrect.");
