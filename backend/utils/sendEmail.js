@@ -1,29 +1,14 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendVerificationEmail = async (email, token) => {
-  
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error("FAIL; SKIP");
-    return;
-  }
-  
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
   const baseUrl = process.env.FRONTEND_URL;
   const url = `${baseUrl}/verify-email/${token}`;
 
   try {
-    await transporter.sendMail({
-      from: '"Book Club" <noreply@bookclub.com>',
+    const data = await resend.emails.send({
+      from: 'Book Club <onboarding@resend.dev>',
       to: email,
       subject: 'Confirm your Book Club Membership',
       html: `
@@ -36,10 +21,13 @@ const sendVerificationEmail = async (email, token) => {
           <p style="margin-top: 20px;">If the button doesn't work, copy and paste this link into your browser:</p>
           <p>${url}</p>
         </div>
-        `,
+      `,
     });
+
+    console.log('Verification email sent:', data);
   } catch (error) {
-    console.error("Email send failed.", error);
+    console.error('Email send failed.', error);
+    throw error;
   }
 };
 
