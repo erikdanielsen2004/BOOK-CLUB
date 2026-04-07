@@ -25,7 +25,7 @@ router.post("/signup", async (req, res) => {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
             email: baseEmail,
-            password: hashedPassword
+            password: hashedPassword,
             isVerified: false
         });
         await user.save();
@@ -33,13 +33,13 @@ router.post("/signup", async (req, res) => {
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            { expiresIn: process.env.JWT_SIGNUP_EXPIRES_IN }
         );
 
         const verificationToken = jwt.sign(
-                { id: user._id },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h'}
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
         await sendVerificationEmail(user.email, verificationToken);
 
