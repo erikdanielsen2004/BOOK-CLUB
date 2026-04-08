@@ -40,12 +40,11 @@
     opacity: 0.75;
 }
 
-@media (max-width: 600px) {
-    .about {
-        display: none;
-    }
+@media (max-width: 440px) {
+    
     .navContainer {
         justify-content: center;
+        
     }
     .btn {
         font-size: 20px;

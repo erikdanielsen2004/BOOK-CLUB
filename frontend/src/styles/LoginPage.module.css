@@ -18,8 +18,7 @@
 
 .heroContent {
     flex: 1;
-    display: grid;
-    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+    display: flex;
     align-items: center;
     gap: 2rem;
     width: 100%;
@@ -47,9 +46,9 @@
 
 .booksBlock {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 0;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 50px;
 }
 
 .bottomSection {
@@ -119,16 +118,18 @@
     }
 }
 
-@media (max-width: 600px) {
-    .hero {
-        padding: 0 1rem 0 1rem;
-    }
+@media (max-width: 400px) {
 
     .title {
-        font-size: clamp(3rem, 14vw, 4.5rem);
+        text-align: center;
     }
 
     .bottomText {
         font-size: 1.5rem;
     }
+    .heroContent {
+        justify-content: center;
+        flex-direction: reverse;
+    }
+    
 }

@@ -144,18 +144,15 @@
   text-decoration: underline;
 }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .register-page__inner {
-    flex-direction: column;
-    padding-top: 7rem;
-  }
-
-  .register-page__left {
-    text-align: center;
-  }
-
-  .register-page__right {
-    width: 100%;
-  }
+@media (max-width: 440px) {
+    .register-page__right {
+        width: 340px;
+        
+    }
+    .register-page__inner {
+        width: 350px;
+        display: flex;
+        justify-content: center;
+        
+    }
 }

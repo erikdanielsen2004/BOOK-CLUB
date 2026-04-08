@@ -43,9 +43,10 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-page">
-      <NavBar />
+          {/*<NavBar />*/}
 
       <div className="login-page__inner">
+<<<<<<< Updated upstream
         <div className="login-page__left">
           <h1 className="login-page__heading">
             Welcome<br />
@@ -54,6 +55,10 @@ const Login: React.FC = () => {
           </h1>
         </div>
 
+=======
+          
+        {/* Right — login card */}
+>>>>>>> Stashed changes
         <div className="login-page__right">
           <div className="login-card">
             <h2 className="login-card__title">Log In</h2>
@@ -85,16 +90,6 @@ const Login: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-              </div>
-
-              <div className="login-card__remember">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                />
-                <label htmlFor="remember">Save my login information</label>
               </div>
 
               <button

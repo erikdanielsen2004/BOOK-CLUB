@@ -1,6 +1,6 @@
 .bookGrid {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
     min-height: 540px;
     width: 100%;
@@ -51,22 +51,26 @@
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 440px) {
     .bookGrid {
-        min-height: 320px;
+        min-height: 300px;
     }
 
     .bookCover {
         width: clamp(120px, 30vw, 170px);
-        margin-left: -48px;
+        margin-left: -30px;
         border-radius: 14px;
+    }
+    
+    .book1 {
+        transform: translate(50px, 60px) scale(1.2)
     }
 
     .book2 {
-        transform: translateY(0) scale(0.96);
+        transform: translateY(0) scale(1.2);
     }
 
     .book3 {
-        transform: translateY(0) scale(0.92);
+        display: none;
     }
 }

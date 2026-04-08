@@ -3,21 +3,23 @@
     text-align: left;
     color: #FFF8F2;
     margin-top: 100px;
-    margin-left: 140px;
-    font-size: 80px;
+    margin-left: 80px;
+    font-size: 90px;
     width: 100px;
     transition: margin-left 0.5s ease-in-out;
+    font-weight: bolder;
+    font-family: Georgia, 'Times New Roman', serif;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 440px) {
     .titleContainer {
-        font-size: 2.7rem;
+        font-size: 2.6rem;
         text-align: center;
         display: block;
-        margin-top: 200px;
+        margin-top: 175px;
         margin-right: auto;
         margin-left: auto;
-        padding: 20px;
-        width: 370px;
+        padding: 15px;
+        width: 350px;
     }
 }
