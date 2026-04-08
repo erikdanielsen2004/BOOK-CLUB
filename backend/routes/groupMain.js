@@ -23,6 +23,7 @@ router.post("/create/:userId", async (req, res) => {
 
         const user = await User.findById(userId).session(session);
         if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
         const group = new Group({
             name,
@@ -56,6 +57,9 @@ router.delete("/delete/:userId/:groupId", async (req, res) => {
     try {
         const { userId, groupId } = req.params;
 
+        const user = await User.findById(userId).session(session);
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
+        
         const group = await Group.findById(groupId).session(session);
         if (!group) return abortAndEnd(session, res, 404, "Group not found.");
         if (group.owner.toString() !== userId) return abortAndEnd(session, res, 403, "Access denied.");
@@ -88,6 +92,7 @@ router.post("/join/:userId/:groupId", async (req, res) => {
         const user = await User.findById(userId).session(session);
         const group = await Group.findById(groupId).session(session);
         if (!user || !group) return abortAndEnd(session, res, 404, "User or group not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
         const isMember = group.members.some(member => member.toString() === userId);
         if (isMember) return abortAndEnd(session, res, 409, "User is already in this group.");
@@ -119,6 +124,7 @@ router.post("/leave/:userId/:groupId", async (req, res) => {
         const user = await User.findById(userId).session(session);
         const group = await Group.findById(groupId).session(session);
         if (!user || !group) return abortAndEnd(session, res, 404, "User or group not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
         const isMember = group.members.some(member => member.toString() === userId);
         if (!isMember) return abortAndEnd(session, res, 400, "User is not in this group.");
