@@ -23,9 +23,7 @@ router.post("/signup", async (req, res) => {
         const baseEmail = email.toLowerCase().trim();
 
         const existingUser = await User.findOne({ email: baseEmail });
-        if (existingUser) {
-            return sendError(res, 400, "User already exists.");
-        }
+        if (existingUser) return sendError(res, 400, "User already exists.");
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -36,7 +34,6 @@ router.post("/signup", async (req, res) => {
             password: hashedPassword,
             isVerified: false
         });
-
         await user.save();
 
         const token = jwt.sign(
@@ -44,14 +41,13 @@ router.post("/signup", async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_AUTH_EXPIRES_IN }
         );
-                const verificationToken = jwt.sign(
+        const verificationToken = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
 
-        sendVerificationEmail(user.email, verificationToken)
-            .catch((err) => console.error("Email send failed.", err));
+        sendVerificationEmail(user.email, verificationToken).catch((err) => console.error("Email send failed.", err));
 
         return res.status(201).json({
             message: "User registered successfully. Please check your email to verify your account.",
