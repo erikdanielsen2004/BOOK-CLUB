@@ -53,16 +53,6 @@ const Register: React.FC = () => {
     <div className="register-page">
 
       <div className="register-page__inner">
-<<<<<<< Updated upstream
-        <div className="register-page__left">
-          <h1 className="register-page__heading">
-            Welcome<br />
-            to the<br />
-            Book Club!
-          </h1>
-        </div>
-=======
->>>>>>> Stashed changes
 
         <div className="register-page__right">
           <div className="register-card">

@@ -46,19 +46,9 @@ const Login: React.FC = () => {
           {/*<NavBar />*/}
 
       <div className="login-page__inner">
-<<<<<<< Updated upstream
-        <div className="login-page__left">
-          <h1 className="login-page__heading">
-            Welcome<br />
-            to the<br />
-            Book Club!
-          </h1>
-        </div>
-
-=======
           
         {/* Right — login card */}
->>>>>>> Stashed changes
+
         <div className="login-page__right">
           <div className="login-card">
             <h2 className="login-card__title">Log In</h2>
