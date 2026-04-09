@@ -3,27 +3,30 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const User = require("../models/User.js");
-const sendVerificationEmail = require('../utils/sendEmail.js');
+const sendVerificationEmail = require('../utils/verifyEmail.js');
 const router = express.Router();
 
 function sendError(res, status, message) { return res.status(status).json({ message }); }
 
 router.post("/signup", async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body;
+        const { firstName, lastName, email, password, confirmPassword} = req.body;
 
-        if (!firstName || !lastName || !email || !password) {
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
             return sendError(res, 400, "All fields are required.");
         }
-
-        if (!validator.isEmail(email)) {
-            return sendError(res, 400, "Invalid email.");
-        }
+        if (!validator.isEmail(email)) return sendError(res, 400, "Invalid email.");
 
         const baseEmail = email.toLowerCase().trim();
 
         const existingUser = await User.findOne({ email: baseEmail });
         if (existingUser) return sendError(res, 400, "User already exists.");
+
+        const passwordRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/;
+        if (password !== confirmPassword) return sendError(res, 400, "Passwords do not match.");
+        if (password.length < 7) return sendError(res, 400, "Password should be at least 7 characters.");
+        if (!passwordRegEx.test(password))
+            return sendError(res, 400, "Password should contain 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.");
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -47,7 +50,7 @@ router.post("/signup", async (req, res) => {
             { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
 
-        sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Email send failed.", error));
+        await sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Email send failed.", error));
 
         return res.status(201).json({
             message: "User registered successfully. Please check your email to verify your account.",
