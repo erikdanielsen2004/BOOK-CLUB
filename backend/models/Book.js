@@ -10,8 +10,8 @@ const bookSchema = new mongoose.Schema({
     thumbnail: String,
     pageCount: Number,
     publishedDate: String,
-    averageRating: Number,
-    ratingsCount: Number,
+    averageRating: { type: Number, default: 0 },
+    ratingsCount: { type: Number, default: 0 },
     reviews: [
         {
           type: mongoose.Schema.Types.ObjectId,
