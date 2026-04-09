@@ -7,6 +7,7 @@ const authRouter = require('./routes/auth.js');
 const groupMainRouter = require('./routes/groupMain.js');
 const passwordResetRouter = require('./routes/passwordReset.js');
 const searchRouter = require('./routes/search.js');
+const reviewsRouter = require('./routes/bookReviews.js');
 
 const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI)
@@ -20,5 +21,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/group-main', groupMainRouter);
 app.use('/api/reset', passwordResetRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/book-reviews', reviewsRouter);
 
 module.exports = app;
