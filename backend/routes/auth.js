@@ -96,9 +96,9 @@ router.get("/verify-email/:token", async (req, res) => {
 
 router.post("/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, confirmPassword } = req.body;
 
-        if (!email || !password) return sendError(res, 400, "All fields are required.");
+        if (!email || !password || !confirmPassword) return sendError(res, 400, "All fields are required.");
 
         const baseEmail = email.toLowerCase().trim();
 
