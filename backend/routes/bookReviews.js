@@ -70,3 +70,5 @@ router.post("/create-review/:bookId/:userId", async (req, res) => {
         return abortAndEnd(session, res, 500, "Server error.");
     }
 });
+
+module.exports = router;
