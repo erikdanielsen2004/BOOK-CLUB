@@ -11,6 +11,66 @@ async function abortAndEnd(session, res, status, message) {
     return res.status(status).json({ message });
 }
 
+router.get("/search", async (req, res) => {
+    try {
+        
+        const { searchBar } = req.query;
+
+        let query = {};
+        if (searchBar) {
+            query = {
+                $or: [
+                    { name: { $regex: searchBar, $options: "i" } }, 
+                    { description: { $regex: searchBar, $options: "i" } }
+                ] 
+            };
+        }
+        
+        const groups = await Group.aggregate([
+            { $match: query },
+            { $addFields: { memberCount: { $size: "$members" } } },
+            { $sort: { memberCount: -1 } }
+        ]);
+
+        return res.status(200).json({ message: "Search success." , groups});
+
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Server error." });
+    }
+});
+
+router.get("/search/:userId", async (req, res) => {
+    try {
+        
+        const { searchBar } = req.query;
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        let query = { _id: { $in: user.joinedGroups } };
+        if (searchBar) {
+            query.$or = [
+                { name: { $regex: searchBar, $options: "i" } },
+                { description: { $regex: searchBar, $options: "i" } }
+            ];
+        };
+        
+        const groups = await Group.aggregate([
+            { $match: query },
+            { $addFields: { memberCount: { $size: "$members" } } },
+            { $sort: { memberCount: -1 } }
+        ]);
+
+        return res.status(200).json({ message: "Search success." , groups});
+
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Server error." });
+    }
+});
+
 router.post("/create/:userId", async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -41,7 +101,6 @@ router.post("/create/:userId", async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
-
         return res.status(201).json({ message: "Group created successfully.", group });
 
     } catch (error) {
