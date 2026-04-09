@@ -11,7 +11,7 @@ const bookSchema = new mongoose.Schema({
     pageCount: Number,
     publishedDate: String,
     averageRating: { type: Number, default: 0 },
-    ratingsCount: { type: Number, default: 0 },
+    ratingsCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 bookSchema.index({ title: 1 });
