@@ -8,19 +8,23 @@ import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import MyShelf from './pages/Myshelf.tsx';
 import VerifyEmail from './pages/VerifyEmail.tsx';
+import ForgotPassword from './pages/ForgotPassword.tsx';
+import ResetPassword from './pages/ResetPassword.tsx';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/"         element={<LoginPage />} />
-        <Route path="/login"    element={<Login />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/books"    element={<BooksPage />} />
+        <Route path="/books" element={<BooksPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/myshelf"   element={<MyShelf />} />
+        <Route path="/myshelf" element={<MyShelf />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
-        <Route path="*"         element={<Navigate to="/" replace />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
