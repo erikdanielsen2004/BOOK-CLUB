@@ -12,12 +12,6 @@ const bookSchema = new mongoose.Schema({
     publishedDate: String,
     averageRating: { type: Number, default: 0 },
     ratingsCount: { type: Number, default: 0 },
-    reviews: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Review'
-        }
-    ]
 }, { timestamps: true });
 
 bookSchema.index({ title: 1 });
