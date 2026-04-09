@@ -1,4 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+type UserData = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
 
 type Book = {
   googleBooksId: string;
@@ -13,7 +20,20 @@ type Book = {
   ratingsCount: number;
 };
 
+const getStoredUser = (): UserData | null => {
+  const raw = localStorage.getItem("user");
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 function BookUI() {
+  const user = useMemo(() => getStoredUser(), []);
+
   const [searchText, setSearchText] = useState('');
   const [category, setCategory] = useState('');
   const [books, setBooks] = useState<Book[]>([]);
@@ -43,7 +63,6 @@ function BookUI() {
 
       if (!response.ok) {
         setMessage(data.message || 'Search failed.');
-        setLoading(false);
         return;
       }
 
@@ -51,11 +70,37 @@ function BookUI() {
       if (!data.books || data.books.length === 0) {
         setMessage('No books found.');
       }
-    } catch (error) {
+    } catch {
       setMessage('Could not search books.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function addToList(book: Book, list: 'hasRead' | 'reading' | 'wantsToRead') {
+    if (!user?.id) {
+      setMessage('You must be logged in.');
+      return;
     }
 
-    setLoading(false);
+    try {
+      const response = await fetch(`/api/user-books/${user.id}/${list}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(book)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.message || 'Could not add book.');
+        return;
+      }
+
+      setMessage(`Added "${book.title}" to ${list}.`);
+    } catch {
+      setMessage('Could not add book.');
+    }
   }
 
   return (
@@ -98,7 +143,7 @@ function BookUI() {
         id="bookList"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
           gap: '1rem',
           marginTop: '1.5rem'
         }}
@@ -137,11 +182,17 @@ function BookUI() {
 
             {book.description && (
               <p style={{ marginTop: '0.75rem' }}>
-                {book.description.length > 180
-                  ? `${book.description.substring(0, 180)}...`
+                {book.description.length > 160
+                  ? `${book.description.substring(0, 160)}...`
                   : book.description}
               </p>
             )}
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
+              <button type="button" onClick={() => addToList(book, 'reading')}>Reading</button>
+              <button type="button" onClick={() => addToList(book, 'hasRead')}>Has Read</button>
+              <button type="button" onClick={() => addToList(book, 'wantsToRead')}>Want to Read</button>
+            </div>
           </div>
         ))}
       </div>
