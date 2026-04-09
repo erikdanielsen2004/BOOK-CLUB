@@ -1,0 +1,255 @@
+/* ── Backdrop ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+/* ── Modal box ── */
+.modal {
+  background: #f5ede4;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ── Close button ── */
+.modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: color 0.2s;
+  line-height: 1;
+  padding: 0.25rem;
+}
+.modal__close:hover { color: #1a0a0a; }
+
+/* ── Header ── */
+.modal__header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.modal__cover {
+  width: 64px;
+  min-width: 64px;
+  height: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.modal__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal__book-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.modal__title {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a0a0a;
+  margin: 0;
+  line-height: 1.3;
+}
+.modal__author { font-size: 0.875rem; color: rgba(0, 0, 0, 0.5); margin: 0; }
+
+/* ── Sections ── */
+.modal__section { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.modal__label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1a0a0a;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Status buttons ── */
+.modal__status-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.status-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Courier New', monospace;
+}
+.status-btn:hover     {
+  border-color: #8C2F39;
+  color: white;
+  background-color: #8C2F39;
+}
+.status-btn--active   {
+  background: #8C2F39;
+  border-color: #8C2F39;
+  color: white;
+}
+
+/* ── Page inputs ── */
+.modal__page-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.modal__page-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.modal__page-label {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.45);
+  font-family: 'Courier New', monospace;
+}
+
+.modal__page-input {
+  width: 90px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: white;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a0a0a;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.modal__page-input:focus { border-color: #8C2F39; }
+
+.modal__page-divider {
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.45);
+  padding-bottom: 0.5rem;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Progress preview ── */
+.modal__progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal__progress-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.modal__progress-fill {
+  height: 100%;
+  background: #8C2F39;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.modal__progress-pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #8C2F39;
+  font-family: 'Courier New', monospace;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── Stars ── */
+.star-rating { display: flex; gap: 0.25rem; }
+
+.star {
+  background: transparent;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.2);
+  transition: color 0.15s, transform 0.15s;
+  line-height: 1;
+  padding: 0;
+}
+.star--filled { color: #e6a817; }
+.star:hover   { transform: scale(1.15); }
+
+/* ── Textarea ── */
+.modal__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  background: white;
+  font-size: 0.9rem;
+  color: #1a0a0a;
+  resize: vertical;
+  outline: none;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+}
+.modal__textarea:focus        { border-color: #8C2F39; }
+.modal__textarea::placeholder { color: rgba(0, 0, 0, 0.35); }
+
+/* ── Actions ── */
+.modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modal__btn {
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Courier New', monospace;
+}
+.modal__btn--cancel {
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.55);
+}
+.modal__btn--cancel:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+  color: #1a0a0a;
+}
+.modal__btn--save{
+   background: #8C2F39;
+   border: 1.5px solid #8C2F39;
+   color: white;
+  }
+.modal__btn--save:hover { background: #6e1b1b; }

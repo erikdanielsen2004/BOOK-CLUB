@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import NavBar from "../components/NavBar.tsx";
 import "../styles/Login.css";
 import BookThumbnail from "../components/BookThumbnail.tsx";
 
@@ -9,7 +8,6 @@ const Login: React.FC = () => {
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
 
@@ -44,12 +42,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-page">
-          {/*<NavBar />*/}
-
       <div className="login-page__inner">
-          
-        {/* Right — login card */}
-
         <div className="login-page__right">
           <div className="login-card">
             <h2 className="login-card__title">Log In</h2>
@@ -83,6 +76,10 @@ const Login: React.FC = () => {
                 />
               </div>
 
+              <p className="login-card__forgot">
+                <Link to="/forgot-password">Forgot Password?</Link>
+              </p>
+
               <button
                 type="submit"
                 className="login-card__btn"
@@ -96,12 +93,13 @@ const Login: React.FC = () => {
               Don't have an account?{" "}
               <Link to="/register">Sign up</Link>
               <br /><br />
-              <Link to="/LoginPage">Back to Main</Link>
+              <Link to="/">Back to Main</Link>
             </p>
           </div>
         </div>
       </div>
-          <BookThumbnail isLoginPage={true}/>
+
+      <BookThumbnail isLoginPage={true} />
     </div>
   );
 };

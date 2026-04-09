@@ -1,0 +1,400 @@
+/* ── Backdrop ── */
+.gmodal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+/* ── Modal box ── */
+.gmodal {
+  background: #f5ede4;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ── Close ── */
+.gmodal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0.25rem;
+  line-height: 1;
+}
+.gmodal__close:hover { color: #1a0a0a; }
+
+/* ── Header ── */
+.gmodal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-right: 1.5rem;
+}
+
+.gmodal__name {
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a0a0a;
+  margin: 0 0 0.25rem;
+}
+
+.gmodal__desc {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.gmodal__member-count {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.45);
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  margin-top: 0.25rem;
+}
+
+/* ── Tabs ── */
+.gmodal__tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.gmodal__tab {
+  background: transparent;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.gmodal__tab:hover        { color: #8C2F39; }
+.gmodal__tab--active      { color: #8C2F39; border-bottom-color: #8C2F39; font-weight: 700; }
+
+/* ── Content area ── */
+.gmodal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gmodal__section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.gmodal__meta {
+  font-size: 0.875rem;
+  color: #1a0a0a;
+  margin: 0;
+}
+
+.gmodal__empty {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.4);
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Members ── */
+.gmodal__members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gmodal__member {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gmodal__member-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #8C2F39;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gmodal__member-name {
+  font-size: 0.9rem;
+  color: #1a0a0a;
+  font-weight: 500;
+}
+
+.gmodal__owner-badge {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 400;
+}
+
+/* ── Leave / delete ── */
+.gmodal__leave-btn {
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  background: transparent;
+  border: 1.5px solid rgba(139, 35, 35, 0.4);
+  color: #8C2F39;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Courier New', monospace;
+}
+.gmodal__leave-btn:hover { background: #8C2F39; color: white; border-color: #8C2F39; }
+
+.gmodal__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.gmodal__confirm p { font-size: 0.875rem; color: #1a0a0a; margin: 0; font-weight: 600; }
+.gmodal__confirm-actions { display: flex; gap: 0.5rem; }
+
+.gmodal__confirm-yes {
+  padding: 0.4rem 1rem;
+  background: #8C2F39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.gmodal__confirm-yes:hover { background: #6e1b1b; }
+
+.gmodal__confirm-no {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.55);
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.gmodal__confirm-no:hover { border-color: rgba(0, 0, 0, 0.4); color: #1a0a0a; }
+
+/* ── Book search ── */
+.gmodal__book-search {
+  display: flex;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: white;
+}
+
+.gmodal__book-search input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1a0a0a;
+  background: transparent;
+}
+.gmodal__book-search input::placeholder { color: rgba(0, 0, 0, 0.35); }
+
+.gmodal__book-search button {
+  padding: 0.6rem 1rem;
+  background: #8C2F39;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.9rem;
+}
+.gmodal__book-search button:hover    { background: #6e1b1b; }
+.gmodal__book-search button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Search results ── */
+.gmodal__search-results {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gmodal__search-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gmodal__search-result:hover { background: #f5ede4; }
+
+.gmodal__result-cover {
+  width: 32px;
+  min-width: 32px;
+  height: 44px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gmodal__result-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+.gmodal__result-title  { font-size: 0.825rem; font-weight: 700; color: #1a0a0a; margin: 0; }
+.gmodal__result-author { font-size: 0.75rem; color: rgba(0, 0, 0, 0.45); margin: 0.1rem 0 0; }
+
+.gmodal__result-add {
+  margin-left: auto;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #8C2F39;
+  white-space: nowrap;
+}
+
+/* ── Candidates list ── */
+.gmodal__candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gmodal__candidate {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.gmodal__candidate-cover {
+  width: 32px;
+  min-width: 32px;
+  height: 44px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gmodal__candidate-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+.gmodal__candidate-info { flex: 1; }
+.gmodal__candidate-title  { font-size: 0.825rem; font-weight: 700; color: #1a0a0a; margin: 0; }
+.gmodal__candidate-author { font-size: 0.75rem; color: rgba(0, 0, 0, 0.45); margin: 0.1rem 0 0; }
+
+.gmodal__candidate-remove {
+  background: transparent;
+  border: none;
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0.25rem;
+}
+.gmodal__candidate-remove:hover { color: #8C2F39; }
+
+/* ── Vote list ── */
+.gmodal__vote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gmodal__vote-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: white;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gmodal__vote-option:hover           { border-color: rgba(140, 47, 57, 0.3); }
+.gmodal__vote-option--voted          { border-color: #8C2F39; background: rgba(140, 47, 57, 0.04); }
+
+.gmodal__vote-cover {
+  width: 36px;
+  min-width: 36px;
+  height: 50px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gmodal__vote-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+.gmodal__vote-info { flex: 1; }
+.gmodal__vote-title  { font-size: 0.875rem; font-weight: 700; color: #1a0a0a; margin: 0; }
+.gmodal__vote-author { font-size: 0.775rem; color: rgba(0, 0, 0, 0.45); margin: 0.1rem 0 0; }
+
+.gmodal__vote-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 40px;
+}
+.gmodal__vote-number { font-size: 1.25rem; font-weight: 800; color: #1a0a0a; font-family: Georgia, serif; line-height: 1; }
+.gmodal__vote-label  { font-size: 0.65rem; color: rgba(0, 0, 0, 0.4); font-family: 'Courier New', monospace; }
+
+.gmodal__voted-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8C2F39;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+/* ── Actions ── */
+.gmodal__actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.25rem; }
+
+.gmodal__btn {
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Courier New', monospace;
+}
+.gmodal__btn--cancel {
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.55);
+}
+.gmodal__btn--cancel:hover { border-color: rgba(0, 0, 0, 0.4); color: #1a0a0a; }
+.gmodal__btn--save         { background: #8C2F39; border: 1.5px solid #8C2F39; color: white; }
+.gmodal__btn--save:hover   { background: #6e1b1b; }
