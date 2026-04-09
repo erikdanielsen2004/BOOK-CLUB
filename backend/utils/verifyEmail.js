@@ -8,7 +8,7 @@ const sendVerificationEmail = async (email, token) => {
 
   try {
     await resend.emails.send({
-      from: 'Book Club <onboarding@resend.dev>',
+      from: 'Book Club <no-reply@mernbookclub.xyz>',
       to: email,
       subject: 'Confirm your Book Club Membership',
       text: `Verify your email (expires in 1 hour): ${url}`,
