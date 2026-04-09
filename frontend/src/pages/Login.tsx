@@ -93,7 +93,7 @@ const Login: React.FC = () => {
               Don't have an account?{" "}
               <Link to="/register">Sign up</Link>
               <br /><br />
-              <Link to="/LoginPage">Back to Main</Link>
+              <Link to="/">Back to Main</Link>
             </p>
           </div>
         </div>
