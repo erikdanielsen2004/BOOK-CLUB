@@ -8,7 +8,7 @@ const sendResetEmail = async (email, token) => {
 
   try {
     await resend.emails.send({
-      from: 'Book Club <onboarding@resend.dev>',
+      from: 'Book Club <no-reply@mernbookclub.xyz>',
       to: email,
       subject: 'Reset your Password',
       text: `Reset your password (expires in 15 minutes): ${url}`,
