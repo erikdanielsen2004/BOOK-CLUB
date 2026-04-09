@@ -64,3 +64,5 @@ router.post("/reset-password/:token", async (req, res) => {
         return sendError(res, 400, "Invalid or expired password reset link.");
     }
 });
+
+module.exports = router;
