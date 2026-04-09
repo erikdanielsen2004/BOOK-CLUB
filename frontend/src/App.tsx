@@ -7,6 +7,7 @@ import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import MyShelf from './pages/Myshelf.tsx';
+import MyGroups from './pages/MyGroups.tsx';
 import VerifyEmail from './pages/VerifyEmail.tsx';
 import ForgotPassword from './pages/ForgotPassword.tsx';
 import ResetPassword from './pages/ResetPassword.tsx';
@@ -21,6 +22,7 @@ function App() {
         <Route path="/books" element={<BooksPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/myshelf" element={<MyShelf />} />
+        <Route path="/groups" element={<MyGroups />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
