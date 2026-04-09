@@ -78,7 +78,7 @@ class AppTheme {
         color: cream,
         elevation: 10,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );

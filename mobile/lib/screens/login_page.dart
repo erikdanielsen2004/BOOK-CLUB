@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
-  bool _remember = false;
+  //bool _remember = false;
   bool _loading = false;
   String? _error;
 
@@ -58,39 +58,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Widget _navBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('About Us', style: TextStyle(color: AppTheme.whiteText)),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Log In', style: TextStyle(color: AppTheme.whiteText)),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.dark2,
-              foregroundColor: AppTheme.whiteText,
-              minimumSize: const Size(90, 40),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RegisterPage()),
-              );
-            },
-            child: const Text('Sign Up'),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _formCard() {
     return Card(
@@ -107,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.dark,
+                fontFamily: 'PT Mono',
               ),
             ),
             const SizedBox(height: 24),
@@ -154,19 +123,8 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 14),
             Row(
               children: [
-                Checkbox(
-                  value: _remember,
-                  activeColor: AppTheme.background,
-                  onChanged: (v) {
-                    setState(() => _remember = v ?? false);
-                  },
-                ),
-                const Expanded(
-                  child: Text(
-                    'Save my login information',
-                    style: TextStyle(color: AppTheme.dark, fontSize: 14),
-                  ),
-                )
+                
+                
               ],
             ),
             const SizedBox(height: 8),
@@ -230,7 +188,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _navBar(),
+            
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -242,16 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         children: [
                           const SizedBox(height: 30),
-                          const Text(
-                            'Welcome\nto the\nBook Club!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppTheme.whiteText,
-                              fontSize: 44,
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                            ),
-                          ),
+                          
                           const SizedBox(height: 30),
                           _formCard(),
                         ],

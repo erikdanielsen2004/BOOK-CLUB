@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_page.dart';
+import 'screens/landing_page.dart';
 
 void main() {
   runApp(const BookClubApp());
@@ -16,7 +16,7 @@ class BookClubApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
       ),
-      home: const LoginPage(),
+      home: const LandingPage(),
     );
   }
 }

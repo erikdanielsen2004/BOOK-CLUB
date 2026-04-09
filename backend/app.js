@@ -25,3 +25,7 @@ app.use('/api/reset', passwordResetRouter);
 const PORT = process.env.PORT;
 
 module.exports = app;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});

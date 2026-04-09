@@ -16,15 +16,8 @@ class LandingPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'About Us',
-                      style: TextStyle(color: AppTheme.whiteText),
-                    ),
-                  ),
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: () {
@@ -115,6 +108,8 @@ class _HeroTitle extends StatelessWidget {
         fontSize: 54,
         fontWeight: FontWeight.w800,
         height: 1.05,
+        fontFamily: 'Georgia'
+        
       ),
     );
   }

@@ -34,12 +34,16 @@ class AuthService {
   }) async {
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/auth/signup'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json'
+        'Accept': 'application/json'
+        },
       body: jsonEncode({
         'firstName': firstName,
         'lastName': lastName,
         'email': email,
-        'passwordHash': password,
+        'password': password,
+        'confirmPassword': password,
       }),
     );
 
