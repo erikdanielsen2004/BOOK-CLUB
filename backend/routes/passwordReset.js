@@ -13,12 +13,13 @@ router.post("/send-reset-email", async (req, res) => {
         
         const { email } = req.body;
 
-        if (!validator.isEmail(email)) return sendError(res, 400, "Invalid email.");
+        if (!validator.isEmail(email)) return sendError(res, 400, "Invalid or unverified email.");
 
         const baseEmail = email.toLowerCase().trim();
 
         const user = await User.findOne({ email: baseEmail });
-        if (!user) return res.status(200).json({ message: "Reset email sent." });
+        if (!user) return sendError(res, 400, "Invalid or unverified email.");
+        if (!user.isVerified) return sendError(res, 400, "Invalid or unverified email.");
         
         const resetToken = jwt.sign(
             { id: user._id },
@@ -26,7 +27,7 @@ router.post("/send-reset-email", async (req, res) => {
             { expiresIn: process.env.JWT_RESET_PASS_EXPIRES_IN }
         );
 
-        await sendResetEmail(user.email, resetToken).catch((error) => console.error("Email send failed.", error));
+        await sendResetEmail(user.email, resetToken);
         return res.status(200).json({ message: "Reset email sent." });
 
     } catch (error) {
@@ -44,6 +45,7 @@ router.post("/reset-password/:token", async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id);
         if (!user) return sendError(res, 404, "User not found.");
+        if (!user.isVerified) return sendError(res, 401, "Please verify your email.");
 
         const { newPassword, confirmNewPassword } = req.body;
         const passwordRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/;
