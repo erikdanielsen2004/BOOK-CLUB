@@ -38,6 +38,45 @@
     transform: translateY(0) scale(0.94);
 }
 
+
+.loginSplitGrid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bookWrapper {
+    display: flex;
+    align-items: center;
+}
+
+
+.leftCutoff img {
+    transform: translateX(-40%);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+}
+
+.rightCutoff img {
+    transform: translateX(40%);
+    box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+}
+
+.loginBookCover {
+    width: clamp(350px, 45vw, 470px);
+    height: 500px;
+    border-radius: 40px;
+    filter: brightness(0.7);
+}
+
+
 @media (max-width: 900px) {
     .bookGrid {
         min-height: 430px;
@@ -54,6 +93,10 @@
 @media (max-width: 440px) {
     .bookGrid {
         min-height: 300px;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        
     }
 
     .bookCover {
@@ -71,6 +114,9 @@
     }
 
     .book3 {
+        display: none;
+    }
+    .loginSplitGrid {
         display: none;
     }
 }

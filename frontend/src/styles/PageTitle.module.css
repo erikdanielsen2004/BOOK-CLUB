@@ -16,10 +16,11 @@
         font-size: 2.6rem;
         text-align: center;
         display: block;
-        margin-top: 175px;
+        margin-top: -150px;
         margin-right: auto;
         margin-left: auto;
         padding: 15px;
         width: 350px;
+        transform: translateY(-50%);
     }
 }

@@ -7,7 +7,7 @@ type OpenLibraryBook = {
   cover_i?: number;
 };
 
-function BookThumbnail() {
+function BookThumbnail({ isLoginPage = false }: { isLoginPage?: boolean }) {
   const [books, setBooks] = useState<OpenLibraryBook[]>([]);
 
   useEffect(() => {
@@ -26,7 +26,6 @@ function BookThumbnail() {
         );
 
         const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-
         setBooks(shuffled.slice(0, 3));
       } catch (err) {
         console.error('Error fetching Open Library books:', err);
@@ -36,23 +35,43 @@ function BookThumbnail() {
     fetchBooks();
   }, []);
 
-  return (
-    <div className={styles.bookGrid}>
-      {books.map((book, index) => {
-        const coverUrl = `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`;
 
-        return (
+  if (!isLoginPage) {
+    return (
+      <div className={styles.bookGrid}>
+        {books.map((book, index) => (
           <img
             key={book.key}
-            src={coverUrl}
+            src={`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`}
             alt={book.title}
             className={`${styles.bookCover} ${styles[`book${index + 1}`]}`}
-            onError={(e) => {
-              e.currentTarget.src = '/image.png';
-            }}
           />
-        );
-      })}
+        ))}
+      </div>
+    );
+  }
+
+ 
+  const displayBook = books[0];
+  const coverUrl = displayBook
+    ? `https://covers.openlibrary.org/b/id/${displayBook.cover_i}-L.jpg`
+    : '/image.png';
+
+  return (
+    <div className={styles.loginSplitGrid}>
+      {displayBook && (
+        <>
+          {/* Left Symmetrical Book */}
+          <div className={`${styles.bookWrapper} ${styles.leftCutoff}`}>
+            <img src={coverUrl} alt="decorative book" className={styles.loginBookCover} />
+          </div>
+
+          {/* Right Symmetrical Book */}
+          <div className={`${styles.bookWrapper} ${styles.rightCutoff}`}>
+            <img src={coverUrl} alt="decorative book" className={styles.loginBookCover} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

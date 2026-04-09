@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import NavBar from "../components/NavBar.tsx";
 import "../styles/Register.css";
+import BookThumbnail from "../components/BookThumbnail.tsx";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -139,6 +140,7 @@ const Register: React.FC = () => {
           </div>
         </div>
       </div>
+          <BookThumbnail isLoginPage={true}/>
     </div>
   );
 };
