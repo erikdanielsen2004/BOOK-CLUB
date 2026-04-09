@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import GroupModal, { type GroupModalData } from "../components/GroupModal";
+import Sidebar from "../components/Sidebar.tsx";
+import GroupModal, { type GroupModalData } from "../components/GroupModal.tsx";
 import "../styles/MyGroups.css";
 
 // ── PLACEHOLDER
