@@ -14,4 +14,8 @@ const bookSchema = new mongoose.Schema({
     ratingsCount: Number
 }, { timestamps: true });
 
+bookSchema.index({ title: 1 });
+bookSchema.index({ authors: 1 });
+bookSchema.index({ categories: 1 });
+
 module.exports = mongoose.model('Book', bookSchema);
