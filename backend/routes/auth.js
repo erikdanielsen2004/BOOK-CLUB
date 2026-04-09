@@ -50,7 +50,7 @@ router.post("/signup", async (req, res) => {
             { expiresIn: process.env.JWT_EMAIL_VER_EXPIRES_IN }
         );
 
-        await sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Email send failed.", error));
+        await sendVerificationEmail(user.email, verificationToken);
 
         return res.status(201).json({
             message: "User registered successfully. Please check your email to verify your account.",
