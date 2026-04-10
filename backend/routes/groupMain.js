@@ -117,6 +117,7 @@ router.delete("/delete/:userId/:groupId", async (req, res) => {
         const { userId, groupId } = req.params;
 
         const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
         if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
         
         const group = await Group.findById(groupId).session(session);
