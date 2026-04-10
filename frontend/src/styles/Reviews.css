@@ -1,0 +1,346 @@
+.reviews-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f0ebe3;
+}
+
+.reviews-main {
+  margin-left: 260px;
+  flex: 1;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reviews-heading {
+  font-family: 'Courier New', monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #8C2F39;
+  margin: 0;
+}
+
+.reviews-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.reviews-search-btn,
+.reviews-create-btn,
+.reviews-delete-btn,
+.reviews-page-btn,
+.reviews-modal__save,
+.reviews-modal__cancel {
+  border-radius: 999px;
+  font-family: 'PT Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reviews-search-btn,
+.reviews-create-btn,
+.reviews-page-btn,
+.reviews-modal__save {
+  background: #1a0a0a;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+}
+
+.reviews-search-btn:hover,
+.reviews-create-btn:hover,
+.reviews-page-btn:hover:not(:disabled),
+.reviews-modal__save:hover {
+  background: #2d1515;
+}
+
+.reviews-modal__cancel {
+  background: transparent;
+  border: 1px solid #8C2F39;
+  color: #8C2F39;
+  padding: 0.75rem 1rem;
+}
+
+.reviews-modal__cancel:hover {
+  background: #8C2F39;
+  color: white;
+}
+
+.reviews-delete-btn {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.7);
+  padding: 0.45rem 0.8rem;
+}
+
+.reviews-delete-btn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+}
+
+.reviews-select,
+.reviews-input,
+.reviews-modal__select,
+.reviews-modal__textarea {
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 12px;
+  background: white;
+  color: #1a0a0a;
+  font-family: 'PT Mono', monospace;
+  outline: none;
+}
+
+.reviews-input,
+.reviews-select {
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+}
+
+.reviews-input {
+  min-width: 280px;
+  flex: 1;
+  max-width: 420px;
+}
+
+.reviews-select {
+  min-width: 220px;
+}
+
+.reviews-book-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.reviews-book-card__cover {
+  width: 90px;
+  min-width: 90px;
+  height: 130px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e6dfd7;
+}
+
+.reviews-book-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviews-book-card__title {
+  margin: 0;
+  font-family: Georgia, serif;
+  color: #1a0a0a;
+  font-size: 1.2rem;
+}
+
+.reviews-book-card__author {
+  color: rgba(0, 0, 0, 0.55);
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.reviews-book-card__avg {
+  margin-top: 0.65rem;
+  font-family: 'PT Mono', monospace;
+  color: #8C2F39;
+  font-weight: 700;
+}
+
+.reviews-stars {
+  display: inline-flex;
+  gap: 0.12rem;
+  vertical-align: middle;
+  margin-left: 0.35rem;
+}
+
+.reviews-star {
+  color: #d7b25f;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reviews-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.reviews-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.reviews-card__name {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a0a0a;
+}
+
+.reviews-card__date {
+  font-size: 0.78rem;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 0.2rem;
+}
+
+.reviews-card__rating {
+  font-family: 'PT Mono', monospace;
+  color: #8C2F39;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.reviews-card__text {
+  margin-top: 0.8rem;
+  color: rgba(0, 0, 0, 0.8);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-size: 0.92rem;
+}
+
+.reviews-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.reviews-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reviews-page-label {
+  font-family: 'PT Mono', monospace;
+  color: #1a0a0a;
+  font-size: 0.9rem;
+}
+
+.reviews-toast {
+  align-self: flex-start;
+  background: rgba(40, 120, 60, 0.12);
+  border: 1px solid rgba(40, 120, 60, 0.35);
+  color: #1f6b38;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-family: 'PT Mono', monospace;
+}
+
+.reviews-empty {
+  font-family: 'PT Mono', monospace;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.reviews-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.reviews-modal {
+  width: 100%;
+  max-width: 560px;
+  background: #f0ebe3;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reviews-modal__title {
+  font-family: 'Courier New', monospace;
+  color: #8C2F39;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.reviews-modal__select {
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+}
+
+.reviews-modal__textarea {
+  padding: 0.9rem 1rem;
+  min-height: 130px;
+  resize: vertical;
+  font-size: 0.92rem;
+}
+
+.reviews-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.reviews-star-input {
+  display: flex;
+  gap: 0.15rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reviews-star-input button {
+  border: none;
+  background: transparent;
+  font-size: 1.55rem;
+  color: #d7b25f;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.reviews-rating-value {
+  margin-left: 0.5rem;
+  font-family: 'PT Mono', monospace;
+  color: #8C2F39;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .reviews-main {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+
+  .reviews-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reviews-input,
+  .reviews-select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .reviews-book-card {
+    flex-direction: column;
+  }
+}
