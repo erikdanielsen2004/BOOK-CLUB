@@ -9,7 +9,8 @@ const Sidebar: React.FC = () => {
     { label: "Dashboard", path: "/dashboard" },
     { label: "My Shelf", path: "/myshelf" },
     { label: "My Groups", path: "/groups" },
-    { label: "Books", path: "/books" }
+    { label: "Books", path: "/books" },
+    { label: "Reviews", path: "/reviews" }
   ];
 
   const handleLogout = () => {
