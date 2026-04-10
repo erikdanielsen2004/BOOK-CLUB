@@ -15,8 +15,12 @@ const reviewSchema = new mongoose.Schema(
     rating: {
       type: Number,
       required: true,
-      min: 1,
-      max: 5
+      min: 0.5,
+      max: 5,
+      validate: {
+        validator: (value) => Number.isInteger(value * 2),
+        message: 'Rating must be in 0.5 increments.'
+      }
     },
     reviewText: {
       type: String,
