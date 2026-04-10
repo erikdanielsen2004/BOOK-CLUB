@@ -9,13 +9,18 @@ type UserData = {
   email: string;
 };
 
-type Book = {
+type ReviewedBook = {
   _id: string;
   title: string;
   authors?: string[];
   thumbnail?: string;
-  averageRating?: number;
-  ratingsCount?: number;
+  averageRatingDb: number;
+  reviewCount: number;
+};
+
+type ReviewUser = {
+  firstName: string;
+  lastName: string;
 };
 
 type ReviewItem = {
@@ -23,15 +28,33 @@ type ReviewItem = {
   rating: number;
   reviewText: string;
   createdAt: string;
-  user: {
-    firstName: string;
-    lastName: string;
+  user: ReviewUser;
+};
+
+type ViewResponse = {
+  book: {
+    _id: string;
+    title: string;
+    authors?: string[];
+    thumbnail?: string;
   };
+  averageRating: number;
+  reviewCount: number;
+  reviews: ReviewItem[];
+  page: number;
+  totalPages: number;
+};
+
+type HasReadBook = {
+  _id: string;
+  title: string;
+  authors?: string[];
 };
 
 const getStoredUser = (): UserData | null => {
   const raw = localStorage.getItem("user");
   if (!raw) return null;
+
   try {
     return JSON.parse(raw);
   } catch {
@@ -40,10 +63,25 @@ const getStoredUser = (): UserData | null => {
 };
 
 const renderStars = (rating: number) => {
-  const full = Math.floor(rating);
-  const half = rating % 1 >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
-  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
+  return [1, 2, 3, 4, 5].map((star) => {
+    let fill = 0;
+    if (rating >= star) fill = 100;
+    else if (rating >= star - 0.5) fill = 50;
+
+    return (
+      <span
+        key={star}
+        className="reviews-star"
+        style={{
+          background: `linear-gradient(90deg, #d7b25f ${fill}%, #ddd ${fill}%)`,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent"
+        }}
+      >
+        ★
+      </span>
+    );
+  });
 };
 
 const HalfStarInput: React.FC<{
@@ -54,136 +92,188 @@ const HalfStarInput: React.FC<{
   const displayValue = hoverValue || value;
 
   return (
-    <div className="reviews-stars-input">
+    <div
+      className="reviews-star-input"
+      onMouseLeave={() => setHoverValue(0)}
+    >
       {[1, 2, 3, 4, 5].map((star) => {
-        const leftValue = star - 0.5;
-        const rightValue = star;
-
-        const leftFilled = displayValue >= leftValue;
-        const rightFilled = displayValue >= rightValue;
+        const fill =
+          displayValue >= star ? 100 : displayValue >= star - 0.5 ? 50 : 0;
 
         return (
-          <div key={star} className="reviews-stars-input__star-wrap">
-            <span className={`reviews-stars-input__star ${leftFilled ? "filled" : ""}`}>★</span>
+          <div key={star} className="reviews-star-input__star">
+            <span className="reviews-star-input__base">★</span>
+            <span
+              className="reviews-star-input__fill"
+              style={{ width: `${fill}%` }}
+            >
+              ★
+            </span>
+
             <button
               type="button"
-              className="reviews-stars-input__half reviews-stars-input__half--left"
-              onMouseEnter={() => setHoverValue(leftValue)}
-              onMouseLeave={() => setHoverValue(0)}
-              onClick={() => onChange(leftValue)}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: "50%",
+                height: "100%",
+                opacity: 0,
+                cursor: "pointer"
+              }}
+              onMouseEnter={() => setHoverValue(star - 0.5)}
+              onClick={() => onChange(star - 0.5)}
             />
             <button
               type="button"
-              className="reviews-stars-input__half reviews-stars-input__half--right"
-              onMouseEnter={() => setHoverValue(rightValue)}
-              onMouseLeave={() => setHoverValue(0)}
-              onClick={() => onChange(rightValue)}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 0,
+                width: "50%",
+                height: "100%",
+                opacity: 0,
+                cursor: "pointer"
+              }}
+              onMouseEnter={() => setHoverValue(star)}
+              onClick={() => onChange(star)}
             />
-            <span className={`reviews-stars-input__star reviews-stars-input__star--overlay ${rightFilled ? "filled" : ""}`}>★</span>
           </div>
         );
       })}
-      <span className="reviews-stars-input__value">{displayValue.toFixed(1)}</span>
+
+      <span className="reviews-rating-value">{value.toFixed(1)}</span>
     </div>
   );
 };
 
-const ReviewsPage: React.FC = () => {
+const Reviews: React.FC = () => {
   const user = useMemo(() => getStoredUser(), []);
-  const [bookSearch, setBookSearch] = useState("");
-  const [reviewableSearch, setReviewableSearch] = useState("");
-  const [reviewedBooks, setReviewedBooks] = useState<Book[]>([]);
-  const [reviewableBooks, setReviewableBooks] = useState<Book[]>([]);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+  const [searchText, setSearchText] = useState("");
+  const [reviewedBooks, setReviewedBooks] = useState<ReviewedBook[]>([]);
+  const [selectedBook, setSelectedBook] = useState<ReviewedBook | null>(null);
+  const [viewData, setViewData] = useState<ViewResponse | null>(null);
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+
+  const [writeSearch, setWriteSearch] = useState("");
+  const [hasReadBooks, setHasReadBooks] = useState<HasReadBook[]>([]);
+  const [selectedHasReadBook, setSelectedHasReadBook] = useState<HasReadBook | null>(null);
+  const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState(4.5);
-  const [notice, setNotice] = useState("");
-  const [noticeType, setNoticeType] = useState<"success" | "error" | "">("");
 
-  const searchReviewedBooks = async (q = "") => {
+  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState("");
+
+  const showToast = (text: string) => {
+    setToast(text);
+    setTimeout(() => setToast(""), 2500);
+  };
+
+  const searchReviewedBooks = async () => {
     try {
-      const res = await fetch(`/api/book-reviews/search-books?q=${encodeURIComponent(q)}`);
+      const res = await fetch(
+        `/api/book-reviews/search-books?q=${encodeURIComponent(searchText)}`
+      );
       const data = await res.json();
-      if (!res.ok) return;
+
+      if (!res.ok) {
+        setMessage(data.message || "Could not search reviewed books.");
+        return;
+      }
+
       setReviewedBooks(data.books || []);
-    } catch {}
-  };
-
-  const searchReviewableBooks = async (q = "") => {
-    if (!user?.id) return;
-
-    try {
-      const res = await fetch(`/api/book-reviews/reviewable/${user.id}?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      if (!res.ok) return;
-      setReviewableBooks(data.books || []);
-    } catch {}
-  };
-
-  const loadBookReviews = async (bookId: string, nextSort = sort, nextPage = page) => {
-    try {
-      const res = await fetch(`/api/book-reviews/view/${bookId}?sort=${encodeURIComponent(nextSort)}&page=${nextPage}`);
-      const data = await res.json();
-      if (!res.ok) return;
-
-      setSelectedBook(data.book);
-      setReviews(data.reviews || []);
-      setTotalPages(data.totalPages || 1);
-      setPage(data.page || 1);
-    } catch {}
-  };
-
-  useEffect(() => {
-    searchReviewedBooks("");
-    searchReviewableBooks("");
-  }, []);
-
-  useEffect(() => {
-    if (selectedBook?._id) {
-      loadBookReviews(selectedBook._id, sort, page);
+    } catch {
+      setMessage("Could not search reviewed books.");
     }
-  }, [sort, page]);
+  };
 
-  const handleCreateReview = async (bookId: string) => {
+  const fetchBookReviews = async (bookId: string, nextSort = sort, nextPage = page) => {
+    try {
+      const res = await fetch(
+        `/api/book-reviews/view/${bookId}?sort=${encodeURIComponent(nextSort)}&page=${nextPage}&limit=5`
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Could not load reviews.");
+        return;
+      }
+
+      setViewData(data);
+    } catch {
+      setMessage("Could not load reviews.");
+    }
+  };
+
+  const searchHasReadBooks = async () => {
     if (!user?.id) return;
 
     try {
-      const res = await fetch(`/api/book-reviews/create/${bookId}/${user.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, reviewText })
-      });
+      const res = await fetch(
+        `/api/book-reviews/user-hasread/${user.id}?q=${encodeURIComponent(writeSearch)}`
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.message || "Could not search your Has Read books.");
+        return;
+      }
+
+      setHasReadBooks(data.books || []);
+    } catch {
+      setMessage("Could not search your Has Read books.");
+    }
+  };
+
+  const submitReview = async () => {
+    if (!user?.id || !selectedHasReadBook) return;
+
+    if (rating < 0.5) {
+      setMessage("Please choose a rating.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/book-reviews/create/${selectedHasReadBook._id}/${user.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rating,
+            reviewText
+          })
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        setNotice(data.message || "Could not create review.");
-        setNoticeType("error");
+        setMessage(data.message || "Could not create review.");
         return;
       }
 
-      setNotice("Review created successfully.");
-      setNoticeType("success");
+      showToast("Review created successfully.");
+      setSelectedHasReadBook(null);
       setReviewText("");
-      setRating(4.5);
+      setRating(0);
+      setWriteSearch("");
+      setHasReadBooks([]);
 
-      await searchReviewedBooks(bookSearch);
-      await searchReviewableBooks(reviewableSearch);
-      await loadBookReviews(bookId, "newest", 1);
-      setSort("newest");
-      setPage(1);
+      if (selectedBook && selectedBook._id === selectedHasReadBook._id) {
+        fetchBookReviews(selectedBook._id, sort, 1);
+      }
+
+      searchReviewedBooks();
     } catch {
-      setNotice("Could not create review.");
-      setNoticeType("error");
+      setMessage("Could not create review.");
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!user?.id || !selectedBook?._id) return;
+  const deleteReview = async (reviewId: string) => {
+    if (!user?.id || !selectedBook) return;
 
     try {
       const res = await fetch(`/api/book-reviews/delete/${user.id}/${reviewId}`, {
@@ -193,23 +283,23 @@ const ReviewsPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        setNotice(data.message || "Could not delete review.");
-        setNoticeType("error");
+        setMessage(data.message || "Could not delete review.");
         return;
       }
 
-      setNotice("Review deleted successfully.");
-      setNoticeType("success");
-
-      await searchReviewedBooks(bookSearch);
-      await searchReviewableBooks(reviewableSearch);
-      await loadBookReviews(selectedBook._id, sort, 1);
-      setPage(1);
+      showToast("Review deleted successfully.");
+      fetchBookReviews(selectedBook._id, sort, page);
+      searchReviewedBooks();
     } catch {
-      setNotice("Could not delete review.");
-      setNoticeType("error");
+      setMessage("Could not delete review.");
     }
   };
+
+  useEffect(() => {
+    if (selectedBook) {
+      fetchBookReviews(selectedBook._id, sort, page);
+    }
+  }, [sort, page]);
 
   return (
     <div className="reviews-layout">
@@ -218,99 +308,138 @@ const ReviewsPage: React.FC = () => {
       <div className="reviews-main">
         <h1 className="reviews-heading">Reviews</h1>
 
-        {notice && (
-          <div className={`reviews-notice ${noticeType === "success" ? "reviews-notice--success" : "reviews-notice--error"}`}>
-            {notice}
+        {toast && <div className="reviews-toast">{toast}</div>}
+        {message && <div className="reviews-message">{message}</div>}
+
+        <section className="reviews-section">
+          <h2 className="reviews-section__title">Search reviewed books</h2>
+
+          <div className="reviews-toolbar">
+            <input
+              className="reviews-input"
+              type="text"
+              placeholder="Search books with reviews..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchReviewedBooks()}
+            />
+            <button className="reviews-btn" type="button" onClick={searchReviewedBooks}>
+              Search
+            </button>
           </div>
-        )}
 
-        <div className="reviews-top-grid">
-          <section className="reviews-panel">
-            <h2 className="reviews-panel__title">Search reviewed books</h2>
-            <div className="reviews-searchbar">
-              <input
-                type="text"
-                placeholder="Search books with reviews..."
-                value={bookSearch}
-                onChange={(e) => setBookSearch(e.target.value)}
-              />
-              <button type="button" onClick={() => searchReviewedBooks(bookSearch)}>
-                Search
-              </button>
-            </div>
-
-            <div className="reviews-book-list">
-              {reviewedBooks.map((book) => (
-                <button
-                  key={book._id}
-                  type="button"
-                  className="reviews-book-list__item"
-                  onClick={() => {
-                    setSort("newest");
-                    setPage(1);
-                    loadBookReviews(book._id, "newest", 1);
-                  }}
-                >
-                  <div className="reviews-book-list__title">{book.title}</div>
-                  <div className="reviews-book-list__meta">
-                    {(book.averageRating || 0).toFixed(2)} · {renderStars(book.averageRating || 0)} · {book.ratingsCount || 0} reviews
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="reviews-panel">
-            <h2 className="reviews-panel__title">Write a review</h2>
-            <div className="reviews-searchbar">
-              <input
-                type="text"
-                placeholder="Search your Has Read books..."
-                value={reviewableSearch}
-                onChange={(e) => setReviewableSearch(e.target.value)}
-              />
-              <button type="button" onClick={() => searchReviewableBooks(reviewableSearch)}>
-                Search
-              </button>
-            </div>
-
-            <div className="reviews-book-list">
-              {reviewableBooks.map((book) => (
-                <div key={book._id} className="reviews-book-list__card">
-                  <div className="reviews-book-list__title">{book.title}</div>
-                  <div className="reviews-book-list__meta">{(book.authors || []).join(", ") || "Unknown"}</div>
-
-                  <div className="reviews-form">
-                    <HalfStarInput value={rating} onChange={setRating} />
-                    <textarea
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                      placeholder="Write your review..."
-                    />
-                    <button type="button" onClick={() => handleCreateReview(book._id)}>
-                      Submit review
-                    </button>
-                  </div>
+          <div className="reviews-book-search-results">
+            {reviewedBooks.map((book) => (
+              <div
+                key={book._id}
+                className="reviews-book-chip"
+                onClick={() => {
+                  setSelectedBook(book);
+                  setPage(1);
+                  setSort("newest");
+                  fetchBookReviews(book._id, "newest", 1);
+                }}
+              >
+                <div className="reviews-book-chip__title">{book.title}</div>
+                <div className="reviews-book-chip__meta">
+                  {book.authors?.join(", ") || "Unknown"}
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {selectedBook && (
-          <section className="reviews-view">
-            <div className="reviews-view__header">
-              <div>
-                <h2 className="reviews-view__title">{selectedBook.title}</h2>
-                <div className="reviews-view__rating">
-                  <span className="reviews-view__rating-number">{(selectedBook.averageRating || 0).toFixed(2)}</span>
-                  <span className="reviews-view__rating-stars">{renderStars(selectedBook.averageRating || 0)}</span>
-                  <span className="reviews-view__rating-count">({selectedBook.ratingsCount || 0} reviews)</span>
+                <div className="reviews-book-chip__rating">
+                  {book.averageRatingDb.toFixed(2)}
+                  <span className="reviews-stars">{renderStars(book.averageRatingDb)}</span>
+                  {" · "}
+                  {book.reviewCount} review{book.reviewCount !== 1 ? "s" : ""}
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
 
+        <section className="reviews-section">
+          <h2 className="reviews-section__title">Write a review</h2>
+
+          <div className="reviews-toolbar">
+            <input
+              className="reviews-input"
+              type="text"
+              placeholder="Search your Has Read books..."
+              value={writeSearch}
+              onChange={(e) => setWriteSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchHasReadBooks()}
+            />
+            <button className="reviews-btn reviews-btn--secondary" type="button" onClick={searchHasReadBooks}>
+              Search
+            </button>
+          </div>
+
+          {hasReadBooks.length > 0 && (
+            <div className="reviews-book-search-results">
+              {hasReadBooks.map((book) => (
+                <div
+                  key={book._id}
+                  className="reviews-book-chip"
+                  onClick={() => setSelectedHasReadBook(book)}
+                >
+                  <div className="reviews-book-chip__title">{book.title}</div>
+                  <div className="reviews-book-chip__meta">
+                    {book.authors?.join(", ") || "Unknown"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedHasReadBook && (
+            <div className="reviews-create-card">
+              <div className="reviews-create-card__book">{selectedHasReadBook.title}</div>
+              <div className="reviews-create-card__author">
+                {selectedHasReadBook.authors?.join(", ") || "Unknown"}
+              </div>
+
+              <HalfStarInput value={rating} onChange={setRating} />
+
+              <textarea
+                className="reviews-textarea"
+                placeholder="Write your review..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+
+              <div className="reviews-toolbar">
+                <button className="reviews-btn" type="button" onClick={submitReview}>
+                  Submit review
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {viewData && (
+          <section className="reviews-section">
+            <div className="reviews-book-card">
+              <div className="reviews-book-card__cover">
+                {viewData.book.thumbnail ? (
+                  <img src={viewData.book.thumbnail} alt={viewData.book.title} />
+                ) : null}
+              </div>
+
+              <div>
+                <h3 className="reviews-book-card__title">{viewData.book.title}</h3>
+                <div className="reviews-book-card__author">
+                  {viewData.book.authors?.join(", ") || "Unknown"}
+                </div>
+                <div className="reviews-book-card__avg">
+                  {viewData.averageRating.toFixed(2)}
+                  <span className="reviews-stars">{renderStars(viewData.averageRating)}</span>
+                  {" · "}
+                  {viewData.reviewCount} review{viewData.reviewCount !== 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+
+            <div className="reviews-toolbar">
               <select
-                className="reviews-sort"
+                className="reviews-select"
                 value={sort}
                 onChange={(e) => {
                   setSort(e.target.value);
@@ -325,55 +454,74 @@ const ReviewsPage: React.FC = () => {
             </div>
 
             <div className="reviews-list">
-              {reviews.map((review) => (
-                <div key={review._id} className="reviews-item">
-                  <div className="reviews-item__top">
-                    <div>
-                      <div className="reviews-item__name">
-                        {review.user.firstName} {review.user.lastName}
+              {viewData.reviews.length > 0 ? (
+                viewData.reviews.map((review) => {
+                  const isMine =
+                    user?.firstName === review.user.firstName &&
+                    user?.lastName === review.user.lastName;
+
+                  return (
+                    <div key={review._id} className="reviews-card">
+                      <div className="reviews-card__top">
+                        <div>
+                          <div className="reviews-card__name">
+                            {review.user.firstName} {review.user.lastName}
+                          </div>
+                          <div className="reviews-card__date">
+                            {new Date(review.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="reviews-card__rating">
+                            {review.rating.toFixed(1)}
+                            <span className="reviews-stars">{renderStars(review.rating)}</span>
+                          </div>
+
+                          {isMine && (
+                            <div style={{ marginTop: "0.55rem", textAlign: "right" }}>
+                              <button
+                                className="reviews-delete-btn"
+                                type="button"
+                                onClick={() => deleteReview(review._id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="reviews-item__rating">
-                        {review.rating.toFixed(2)} · {renderStars(review.rating)}
+
+                      <div className="reviews-card__text">
+                        {review.reviewText || "No review text provided."}
                       </div>
                     </div>
-
-                    <div className="reviews-item__right">
-                      <div className="reviews-item__date">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </div>
-
-                      {user?.id && selectedBook && (
-                        <button
-                          type="button"
-                          className="reviews-item__delete"
-                          onClick={() => handleDeleteReview(review._id)}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="reviews-item__text">{review.reviewText || "No written review."}</div>
-                </div>
-              ))}
+                  );
+                })
+              ) : (
+                <div className="reviews-empty">No reviews yet.</div>
+              )}
             </div>
 
             <div className="reviews-pagination">
               <button
+                className="reviews-page-btn"
                 type="button"
-                disabled={page === 1}
-                onClick={() => setPage((prev) => prev - 1)}
+                disabled={viewData.page <= 1}
+                onClick={() => setPage((p) => p - 1)}
               >
                 Previous
               </button>
 
-              <span>Page {page} of {totalPages}</span>
+              <span className="reviews-page-label">
+                Page {viewData.page} of {viewData.totalPages}
+              </span>
 
               <button
+                className="reviews-page-btn"
                 type="button"
-                disabled={page === totalPages}
-                onClick={() => setPage((prev) => prev + 1)}
+                disabled={viewData.page >= viewData.totalPages}
+                onClick={() => setPage((p) => p + 1)}
               >
                 Next
               </button>
@@ -385,4 +533,4 @@ const ReviewsPage: React.FC = () => {
   );
 };
 
-export default ReviewsPage;
+export default Reviews;
