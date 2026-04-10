@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import "../styles/Books.css";
 
 type UserData = {
   id: string;
@@ -20,6 +21,29 @@ type Book = {
   ratingsCount: number;
 };
 
+const CATEGORY_OPTIONS = [
+  "",
+  "Fiction",
+  "Fantasy",
+  "Romance",
+  "Mystery",
+  "Thriller",
+  "Science Fiction",
+  "Horror",
+  "Biography",
+  "History",
+  "Business",
+  "Young Adult",
+  "Self-Help",
+  "Comics",
+  "Poetry",
+  "Religion",
+  "Travel",
+  "Cooking",
+  "Art",
+  "Computers"
+];
+
 const getStoredUser = (): UserData | null => {
   const raw = localStorage.getItem("user");
   if (!raw) return null;
@@ -33,20 +57,22 @@ const getStoredUser = (): UserData | null => {
 
 function BookUI() {
   const user = useMemo(() => getStoredUser(), []);
-
   const [searchText, setSearchText] = useState('');
   const [category, setCategory] = useState('');
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [page, setPage] = useState(0);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  async function searchBook(event: any): Promise<void> {
-    event.preventDefault();
+  const maxResults = 12;
+
+  async function runSearch(nextPage = 0) {
     setMessage('');
     setBooks([]);
 
     if (!searchText.trim() && !category.trim()) {
-      setMessage('Enter a search term or category.');
+      setMessage('Enter a search term or choose a category.');
       return;
     }
 
@@ -54,9 +80,10 @@ function BookUI() {
 
     try {
       const params = new URLSearchParams();
-
       if (searchText.trim()) params.append('q', searchText.trim());
       if (category.trim()) params.append('category', category.trim());
+      params.append('startIndex', String(nextPage * maxResults));
+      params.append('maxResults', String(maxResults));
 
       const response = await fetch(`/api/search/books?${params.toString()}`);
       const data = await response.json();
@@ -67,6 +94,8 @@ function BookUI() {
       }
 
       setBooks(data.books || []);
+      setPage(nextPage);
+
       if (!data.books || data.books.length === 0) {
         setMessage('No books found.');
       }
@@ -104,98 +133,140 @@ function BookUI() {
   }
 
   return (
-    <div id="bookUIDiv" style={{ padding: '2rem' }}>
-      <h2>Search Books</h2>
-
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+    <div className="book-ui">
+      <div className="book-ui__filters">
         <input
+          className="book-ui__input"
           type="text"
-          id="searchText"
-          placeholder="Book title, author, keyword..."
+          placeholder="Search by title, author, or keyword..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ padding: '0.7rem', minWidth: '260px' }}
+          onKeyDown={(e) => e.key === "Enter" && runSearch(0)}
         />
 
-        <input
-          type="text"
-          id="categoryText"
-          placeholder="Category like fiction, fantasy..."
+        <select
+          className="book-ui__select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          style={{ padding: '0.7rem', minWidth: '220px' }}
-        />
+        >
+          {CATEGORY_OPTIONS.map((cat) => (
+            <option key={cat || "all"} value={cat}>
+              {cat || "All categories"}
+            </option>
+          ))}
+        </select>
 
         <button
           type="button"
-          id="searchBookButton"
-          className="buttons"
-          onClick={searchBook}
+          className="book-ui__search-btn"
+          onClick={() => runSearch(0)}
         >
-          Search Book
+          Search
         </button>
       </div>
 
-      {loading && <p>Searching...</p>}
-      {message && <p>{message}</p>}
+      {loading && <p className="book-ui__message">Searching...</p>}
+      {message && <p className="book-ui__message">{message}</p>}
 
-      <div
-        id="bookList"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginTop: '1.5rem'
-        }}
-      >
-        {books.map((book) => (
-          <div
-            key={book.googleBooksId}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: '12px',
-              padding: '1rem',
-              backgroundColor: '#fff'
-            }}
-          >
-            {book.thumbnail && (
-              <img
-                src={book.thumbnail}
-                alt={book.title}
-                style={{
-                  width: '100%',
-                  height: '260px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  marginBottom: '0.75rem'
-                }}
-              />
-            )}
+      <div className="book-ui__grid">
+        {books.map((book) => {
+          const isExpanded = expanded[book.googleBooksId];
+          const hasLongDesc = book.description && book.description.length > 180;
 
-            <h3 style={{ marginBottom: '0.5rem' }}>{book.title}</h3>
+          return (
+            <div key={book.googleBooksId} className="book-ui__card">
+              <div className="book-ui__cover">
+                {book.thumbnail ? (
+                  <img src={book.thumbnail} alt={book.title} />
+                ) : null}
+              </div>
 
-            <p><strong>Author(s):</strong> {book.authors?.length ? book.authors.join(', ') : 'Unknown'}</p>
-            <p><strong>Category:</strong> {book.categories?.length ? book.categories.join(', ') : 'None'}</p>
-            <p><strong>Published:</strong> {book.publishedDate || 'Unknown'}</p>
-            <p><strong>Pages:</strong> {book.pageCount || 'N/A'}</p>
-            <p><strong>Rating:</strong> {book.averageRating || 'N/A'}</p>
+              <div className="book-ui__title">{book.title}</div>
 
-            {book.description && (
-              <p style={{ marginTop: '0.75rem' }}>
-                {book.description.length > 160
-                  ? `${book.description.substring(0, 160)}...`
-                  : book.description}
-              </p>
-            )}
+              <div className="book-ui__meta">
+                <strong>Author(s):</strong> {book.authors?.length ? book.authors.join(', ') : 'Unknown'}
+              </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
-              <button type="button" onClick={() => addToList(book, 'reading')}>Reading</button>
-              <button type="button" onClick={() => addToList(book, 'hasRead')}>Has Read</button>
-              <button type="button" onClick={() => addToList(book, 'wantsToRead')}>Want to Read</button>
+              <div className="book-ui__meta">
+                <strong>Category:</strong> {book.categories?.length ? book.categories.join(', ') : 'None'}
+              </div>
+
+              <div className="book-ui__meta">
+                <strong>Published:</strong> {book.publishedDate || 'Unknown'}
+              </div>
+
+              <div className="book-ui__meta">
+                <strong>Pages:</strong> {book.pageCount || 'N/A'}
+              </div>
+
+              <div className="book-ui__meta">
+                <strong>Rating:</strong> {book.averageRating || 'N/A'}
+              </div>
+
+              {book.description && (
+                <>
+                  <div className="book-ui__desc">
+                    {isExpanded || !hasLongDesc
+                      ? book.description
+                      : `${book.description.substring(0, 180)}...`}
+                  </div>
+
+                  {hasLongDesc && (
+                    <button
+                      type="button"
+                      className="book-ui__desc-btn"
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [book.googleBooksId]: !prev[book.googleBooksId]
+                        }))
+                      }
+                    >
+                      {isExpanded ? "Read less" : "Read more"}
+                    </button>
+                  )}
+                </>
+              )}
+
+              <div className="book-ui__actions">
+                <button className="book-ui__action-btn" type="button" onClick={() => addToList(book, 'reading')}>
+                  Reading
+                </button>
+                <button className="book-ui__action-btn" type="button" onClick={() => addToList(book, 'hasRead')}>
+                  Has Read
+                </button>
+                <button className="book-ui__action-btn" type="button" onClick={() => addToList(book, 'wantsToRead')}>
+                  Want to Read
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {(books.length > 0 || page > 0) && (
+        <div className="book-ui__pagination">
+          <button
+            type="button"
+            className="book-ui__page-btn"
+            disabled={page === 0}
+            onClick={() => runSearch(page - 1)}
+          >
+            Previous
+          </button>
+
+          <span className="book-ui__page-label">Page {page + 1}</span>
+
+          <button
+            type="button"
+            className="book-ui__page-btn"
+            disabled={books.length < maxResults}
+            onClick={() => runSearch(page + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
