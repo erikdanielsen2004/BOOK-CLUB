@@ -12,7 +12,7 @@ async function abortAndEnd(session, res, status, message) {
     return res.status(status).json({ message });
 }
 
-router.get("/reviews/:bookId", async (req, res) => {
+router.get("/view/:bookId", async (req, res) => {
     try {
         
         const { bookId } = req.params;
@@ -30,7 +30,7 @@ router.get("/reviews/:bookId", async (req, res) => {
     }
 });
 
-router.post("/create-review/:bookId/:userId", async (req, res) => {
+router.post("/create/:bookId/:userId", async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -66,6 +66,43 @@ router.post("/create-review/:bookId/:userId", async (req, res) => {
         await session.commitTransaction();
         session.endSession();
         return res.status(201).json({ message: "Review created successfully.", review });
+
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+router.delete("/delete/:userId/:reviewId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { userId, reviewId } = req.params;
+
+        const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
+        
+        const review = await Review.findOne({ _id: reviewId, user: userId }).session(session);
+        if (!review) return abortAndEnd(session, res, 404, "Review not found.");
+
+        const bookId = review.book;
+        const book = await Book.findById(bookId).session(session);
+        if (!book) return abortAndEnd(session, res, 404, "Book not found.");
+
+        const oldRatingCount = book.ratingsCount;
+        const oldAvgRating = book.averageRating;
+        --book.ratingsCount;
+        if (book.ratingsCount === 0) book.averageRating = 0;
+        else book.averageRating = ( (oldAvgRating * oldRatingCount) - review.rating ) / book.ratingsCount;
+        await book.save({ session });
+
+        await Review.findByIdAndDelete(reviewId).session(session);
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).json({ message: "Review deleted successfully." });
 
     } catch (error) {
         console.error(error.message);
