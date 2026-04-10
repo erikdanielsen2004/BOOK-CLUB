@@ -12,23 +12,67 @@ async function abortAndEnd(session, res, status, message) {
     return res.status(status).json({ message });
 }
 
-function escapeRegex(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function getSort(sortValue) {
+    switch (sortValue) {
+        case "rating_asc":
+            return { rating: 1, createdAt: -1 };
+        case "rating_desc":
+            return { rating: -1, createdAt: -1 };
+        case "oldest":
+            return { createdAt: 1 };
+        case "newest":
+        default:
+            return { createdAt: -1 };
+    }
 }
 
+// get all books that have reviews in YOUR database
 router.get("/search-books", async (req, res) => {
     try {
-        const q = (req.query.q || "").trim();
-        const query = { ratingsCount: { $gt: 0 } };
+        const q = String(req.query.q || "").trim();
 
-        if (q) {
-            query.title = { $regex: escapeRegex(q), $options: "i" };
-        }
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "book",
+                    as: "reviews"
+                }
+            },
+            {
+                $addFields: {
+                    reviewCount: { $size: "$reviews" },
+                    averageRatingDb: {
+                        $cond: [
+                            { $gt: [{ $size: "$reviews" }, 0] },
+                            { $avg: "$reviews.rating" },
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                $match: {
+                    reviewCount: { $gt: 0 },
+                    ...(q ? { title: { $regex: q, $options: "i" } } : {})
+                }
+            },
+            {
+                $project: {
+                    title: 1,
+                    authors: 1,
+                    thumbnail: 1,
+                    averageRatingDb: 1,
+                    reviewCount: 1
+                }
+            },
+            {
+                $sort: { title: 1 }
+            }
+        ];
 
-        const books = await Book.find(query)
-            .sort({ averageRating: -1, ratingsCount: -1, title: 1 })
-            .limit(20);
-
+        const books = await Book.aggregate(pipeline);
         return res.status(200).json({ books });
     } catch (error) {
         console.error(error.message);
@@ -36,30 +80,29 @@ router.get("/search-books", async (req, res) => {
     }
 });
 
-router.get("/reviewable/:userId", async (req, res) => {
+// only books in the user's hasRead list that they have NOT reviewed yet
+router.get("/user-hasread/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
-        const q = (req.query.q || "").trim();
+        const q = String(req.query.q || "").trim().toLowerCase();
 
         const user = await User.findById(userId).populate("hasRead");
         if (!user) return res.status(404).json({ message: "User not found." });
 
-        let books = user.hasRead || [];
-
-        if (q) {
-            const lower = q.toLowerCase();
-            books = books.filter((book) =>
-                book.title?.toLowerCase().includes(lower) ||
-                (book.authors || []).join(" ").toLowerCase().includes(lower)
-            );
-        }
-
         const existingReviews = await Review.find({ user: userId }).select("book");
-        const reviewedIds = new Set(existingReviews.map(r => r.book.toString()));
+        const reviewedBookIds = new Set(existingReviews.map(r => r.book.toString()));
 
-        const reviewableBooks = books.filter((book) => !reviewedIds.has(book._id.toString()));
+        const books = (user.hasRead || []).filter((book) => {
+            const notReviewedYet = !reviewedBookIds.has(book._id.toString());
+            const matchesQuery =
+                !q ||
+                book.title.toLowerCase().includes(q) ||
+                (book.authors || []).some(author => author.toLowerCase().includes(q));
 
-        return res.status(200).json({ books: reviewableBooks });
+            return notReviewedYet && matchesQuery;
+        });
+
+        return res.status(200).json({ books });
     } catch (error) {
         console.error(error.message);
         return res.status(500).json({ message: "Server error." });
@@ -69,33 +112,41 @@ router.get("/reviewable/:userId", async (req, res) => {
 router.get("/view/:bookId", async (req, res) => {
     try {
         const { bookId } = req.params;
-        const sort = req.query.sort || "newest";
+        const sort = String(req.query.sort || "newest");
         const page = Math.max(parseInt(req.query.page || "1", 10), 1);
-        const limit = 5;
+        const limit = Math.max(parseInt(req.query.limit || "5", 10), 1);
         const skip = (page - 1) * limit;
 
         const book = await Book.findById(bookId);
         if (!book) return res.status(404).json({ message: "Book not found." });
 
-        let sortOption = { createdAt: -1 };
-        if (sort === "oldest") sortOption = { createdAt: 1 };
-        if (sort === "rating_desc") sortOption = { rating: -1, createdAt: -1 };
-        if (sort === "rating_asc") sortOption = { rating: 1, createdAt: -1 };
-
         const totalReviews = await Review.countDocuments({ book: bookId });
+
         const reviews = await Review.find({ book: bookId })
-            .sort(sortOption)
+            .sort(getSort(sort))
             .skip(skip)
             .limit(limit)
             .populate("user", "firstName lastName");
 
+        const stats = await Review.aggregate([
+            { $match: { book: new mongoose.Types.ObjectId(bookId) } },
+            {
+                $group: {
+                    _id: "$book",
+                    averageRating: { $avg: "$rating" },
+                    reviewCount: { $sum: 1 }
+                }
+            }
+        ]);
+
         return res.status(200).json({
             message: "Reviews display success.",
             book,
+            averageRating: stats[0]?.averageRating || 0,
+            reviewCount: stats[0]?.reviewCount || 0,
             reviews,
             page,
-            totalPages: Math.max(Math.ceil(totalReviews / limit), 1),
-            totalReviews
+            totalPages: Math.max(Math.ceil(totalReviews / limit), 1)
         });
 
     } catch (error) {
@@ -113,7 +164,7 @@ router.post("/create/:bookId/:userId", async (req, res) => {
         const { bookId, userId } = req.params;
 
         const numericRating = Number(rating);
-        if (!numericRating || numericRating < 0.5 || numericRating > 5 || !Number.isInteger(numericRating * 2)) {
+        if (numericRating < 0.5 || numericRating > 5 || (numericRating * 2) % 1 !== 0) {
             return abortAndEnd(session, res, 400, "Rating must be between 0.5 and 5 in 0.5 increments.");
         }
 
@@ -124,8 +175,8 @@ router.post("/create/:bookId/:userId", async (req, res) => {
         if (!user) return abortAndEnd(session, res, 404, "User not found.");
         if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
-        const hasReadBook = user.hasRead.some(id => id.toString() === bookId);
-        if (!hasReadBook) return abortAndEnd(session, res, 403, "You can only review books in your Has Read list.");
+        const hasRead = user.hasRead.some(id => id.toString() === bookId);
+        if (!hasRead) return abortAndEnd(session, res, 403, "You can only review books in your Has Read list.");
 
         const existingReview = await Review.findOne({ user: userId, book: bookId }).session(session);
         if (existingReview) return abortAndEnd(session, res, 400, "You already reviewed this book.");
@@ -134,14 +185,23 @@ router.post("/create/:bookId/:userId", async (req, res) => {
             user: userId,
             book: bookId,
             rating: numericRating,
-            reviewText: reviewText || ""
+            reviewText
         });
         await review.save({ session });
 
-        const oldRatingCount = book.ratingsCount ?? 0;
-        const oldAvgRating = book.averageRating ?? 0;
-        book.ratingsCount = oldRatingCount + 1;
-        book.averageRating = ((oldAvgRating * oldRatingCount) + numericRating) / book.ratingsCount;
+        const stats = await Review.aggregate([
+            { $match: { book: new mongoose.Types.ObjectId(bookId) } },
+            {
+                $group: {
+                    _id: "$book",
+                    averageRating: { $avg: "$rating" },
+                    reviewCount: { $sum: 1 }
+                }
+            }
+        ]).session(session);
+
+        book.averageRating = stats[0]?.averageRating || 0;
+        book.ratingsCount = stats[0]?.reviewCount || 0;
         await book.save({ session });
 
         await session.commitTransaction();
@@ -168,21 +228,26 @@ router.delete("/delete/:userId/:reviewId", async (req, res) => {
         const review = await Review.findOne({ _id: reviewId, user: userId }).session(session);
         if (!review) return abortAndEnd(session, res, 404, "Review not found.");
 
-        const book = await Book.findById(review.book).session(session);
+        const bookId = review.book;
+        const book = await Book.findById(bookId).session(session);
         if (!book) return abortAndEnd(session, res, 404, "Book not found.");
 
-        const oldRatingCount = book.ratingsCount ?? 0;
-        const oldAvgRating = book.averageRating ?? 0;
-        book.ratingsCount = Math.max(oldRatingCount - 1, 0);
-
-        if (book.ratingsCount === 0) {
-            book.averageRating = 0;
-        } else {
-            book.averageRating = ((oldAvgRating * oldRatingCount) - review.rating) / book.ratingsCount;
-        }
-
-        await book.save({ session });
         await Review.findByIdAndDelete(reviewId).session(session);
+
+        const stats = await Review.aggregate([
+            { $match: { book: new mongoose.Types.ObjectId(bookId) } },
+            {
+                $group: {
+                    _id: "$book",
+                    averageRating: { $avg: "$rating" },
+                    reviewCount: { $sum: 1 }
+                }
+            }
+        ]).session(session);
+
+        book.averageRating = stats[0]?.averageRating || 0;
+        book.ratingsCount = stats[0]?.reviewCount || 0;
+        await book.save({ session });
 
         await session.commitTransaction();
         session.endSession();
