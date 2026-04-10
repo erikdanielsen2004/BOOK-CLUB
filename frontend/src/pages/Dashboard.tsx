@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
     } catch {}
   };
 
-  const currentReading = readingBooks[0] ? mapApiBookToModal(readingBooks[0]) : null;
+  const currentReadingBooks = readingBooks.map(mapApiBookToModal);
 
   return (
     <div className="dashboard-layout">
@@ -153,11 +153,14 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-center">
           <h1 className="dashboard-welcome">Welcome Back, {userName}</h1>
 
-          {currentReading ? (
-            <CurrentlyReadingCard
-              book={currentReading}
-              onClick={() => setSelected(currentReading)}
-            />
+          {currentReadingBooks.length > 0 ? (
+            currentReadingBooks.map((book) => (
+              <CurrentlyReadingCard
+                key={book.id}
+                book={book}
+                onClick={() => setSelected(book)}
+              />
+            ))
           ) : (
             <p className="dashboard-empty">No books currently reading yet.</p>
           )}
