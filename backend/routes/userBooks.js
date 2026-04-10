@@ -15,12 +15,11 @@ function normalizeBookPayload(body) {
         thumbnail: body.thumbnail || '',
         pageCount: body.pageCount || 0,
         publishedDate: body.publishedDate || '',
-        averageRating: body.averageRating || 0,
-        ratingsCount: body.ratingsCount || 0
+        averageRating: 0,
+        ratingsCount: 0
     };
 }
 
-// get all user lists
 router.get('/:userId', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId)
@@ -42,7 +41,6 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
-// add book to one list only, remove from all others first
 router.post('/:userId/:list', async (req, res) => {
     try {
         const { userId, list } = req.params;
@@ -87,7 +85,6 @@ router.post('/:userId/:list', async (req, res) => {
     }
 });
 
-// move book from one list to another
 router.put('/:userId/move', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -116,7 +113,6 @@ router.put('/:userId/move', async (req, res) => {
     }
 });
 
-// remove book from a list
 router.delete('/:userId/:list/:bookId', async (req, res) => {
     try {
         const { userId, list, bookId } = req.params;
