@@ -92,10 +92,7 @@ const HalfStarInput: React.FC<{
   const displayValue = hoverValue || value;
 
   return (
-    <div
-      className="reviews-star-input"
-      onMouseLeave={() => setHoverValue(0)}
-    >
+    <div className="reviews-star-input" onMouseLeave={() => setHoverValue(0)}>
       {[1, 2, 3, 4, 5].map((star) => {
         const fill =
           displayValue >= star ? 100 : displayValue >= star - 0.5 ? 50 : 0;
@@ -171,10 +168,10 @@ const Reviews: React.FC = () => {
     setTimeout(() => setToast(""), 2500);
   };
 
-  const searchReviewedBooks = async () => {
+  const searchReviewedBooks = async (query = "") => {
     try {
       const res = await fetch(
-        `/api/book-reviews/search-books?q=${encodeURIComponent(searchText)}`
+        `/api/book-reviews/search-books?q=${encodeURIComponent(query)}`
       );
       const data = await res.json();
 
@@ -266,7 +263,7 @@ const Reviews: React.FC = () => {
         fetchBookReviews(selectedBook._id, sort, 1);
       }
 
-      searchReviewedBooks();
+      searchReviewedBooks(searchText);
     } catch {
       setMessage("Could not create review.");
     }
@@ -289,11 +286,15 @@ const Reviews: React.FC = () => {
 
       showToast("Review deleted successfully.");
       fetchBookReviews(selectedBook._id, sort, page);
-      searchReviewedBooks();
+      searchReviewedBooks(searchText);
     } catch {
       setMessage("Could not delete review.");
     }
   };
+
+  useEffect(() => {
+    searchReviewedBooks("");
+  }, []);
 
   useEffect(() => {
     if (selectedBook) {
@@ -321,9 +322,9 @@ const Reviews: React.FC = () => {
               placeholder="Search books with reviews..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchReviewedBooks()}
+              onKeyDown={(e) => e.key === "Enter" && searchReviewedBooks(searchText)}
             />
-            <button className="reviews-btn" type="button" onClick={searchReviewedBooks}>
+            <button className="reviews-btn" type="button" onClick={() => searchReviewedBooks(searchText)}>
               Search
             </button>
           </div>
