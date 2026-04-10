@@ -88,6 +88,17 @@
   font-size: 0.9rem;
 }
 
+.book-ui__toast {
+  align-self: flex-start;
+  background: rgba(40, 120, 60, 0.12);
+  border: 1px solid rgba(40, 120, 60, 0.35);
+  color: #1f6b38;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-family: 'PT Mono', monospace;
+}
+
 .book-ui__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -190,6 +201,10 @@
   color: white;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.book-ui__page-btn:hover:not(:disabled) {
+  background: #2d1515;
 }
 
 .book-ui__page-btn:disabled {
