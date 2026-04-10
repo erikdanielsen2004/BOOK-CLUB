@@ -17,8 +17,6 @@ type Book = {
   thumbnail: string;
   pageCount: number;
   publishedDate: string;
-  averageRating: number;
-  ratingsCount: number;
 };
 
 const CATEGORY_OPTIONS = [
@@ -62,6 +60,7 @@ function BookUI() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -69,10 +68,12 @@ function BookUI() {
 
   async function runSearch(nextPage = 0) {
     setMessage('');
+    setMessageType('');
     setBooks([]);
 
     if (!searchText.trim() && !category.trim()) {
       setMessage('Enter a search term or choose a category.');
+      setMessageType('error');
       return;
     }
 
@@ -90,17 +91,31 @@ function BookUI() {
 
       if (!response.ok) {
         setMessage(data.message || 'Search failed.');
+        setMessageType('error');
         return;
       }
 
-      setBooks(data.books || []);
+      const normalized = (data.books || []).map((book: any) => ({
+        googleBooksId: book.googleBooksId,
+        title: book.title,
+        authors: book.authors || [],
+        description: book.description || '',
+        categories: book.categories || [],
+        thumbnail: book.thumbnail || '',
+        pageCount: book.pageCount || 0,
+        publishedDate: book.publishedDate || ''
+      }));
+
+      setBooks(normalized);
       setPage(nextPage);
 
-      if (!data.books || data.books.length === 0) {
+      if (!normalized.length) {
         setMessage('No books found.');
+        setMessageType('error');
       }
     } catch {
       setMessage('Could not search books.');
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -109,6 +124,7 @@ function BookUI() {
   async function addToList(book: Book, list: 'hasRead' | 'reading' | 'wantsToRead') {
     if (!user?.id) {
       setMessage('You must be logged in.');
+      setMessageType('error');
       return;
     }
 
@@ -123,12 +139,20 @@ function BookUI() {
 
       if (!response.ok) {
         setMessage(data.message || 'Could not add book.');
+        setMessageType('error');
         return;
       }
 
-      setMessage(`Added "${book.title}" to ${list}.`);
+      const label =
+        list === "hasRead" ? "Has Read" :
+        list === "reading" ? "Reading" :
+        "Want to Read";
+
+      setMessage(`Added "${book.title}" to ${label}.`);
+      setMessageType('success');
     } catch {
       setMessage('Could not add book.');
+      setMessageType('error');
     }
   }
 
@@ -166,7 +190,11 @@ function BookUI() {
       </div>
 
       {loading && <p className="book-ui__message">Searching...</p>}
-      {message && <p className="book-ui__message">{message}</p>}
+      {message && (
+        <div className={`book-ui__notice ${messageType === 'success' ? 'book-ui__notice--success' : 'book-ui__notice--error'}`}>
+          {message}
+        </div>
+      )}
 
       <div className="book-ui__grid">
         {books.map((book) => {
@@ -197,10 +225,6 @@ function BookUI() {
 
               <div className="book-ui__meta">
                 <strong>Pages:</strong> {book.pageCount || 'N/A'}
-              </div>
-
-              <div className="book-ui__meta">
-                <strong>Rating:</strong> {book.averageRating || 'N/A'}
               </div>
 
               {book.description && (
