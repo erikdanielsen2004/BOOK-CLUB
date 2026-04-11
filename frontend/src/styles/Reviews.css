@@ -138,7 +138,6 @@
   font-family: 'PT Mono', monospace;
 }
 
-/* reviewed books search results */
 .reviews-book-search-results {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -152,12 +151,17 @@
   padding: 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .reviews-book-chip:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+}
+
+.reviews-book-chip--selected {
+  border-color: rgba(140, 47, 57, 0.38);
+  box-shadow: 0 6px 16px rgba(140, 47, 57, 0.12);
 }
 
 .reviews-book-chip__title {
@@ -182,7 +186,6 @@
   font-size: 0.85rem;
 }
 
-/* selected book header */
 .reviews-book-card {
   background: white;
   border-radius: 14px;
@@ -229,7 +232,6 @@
   font-size: 0.95rem;
 }
 
-/* stars display */
 .reviews-stars {
   display: inline-flex;
   gap: 0.08rem;
@@ -237,12 +239,40 @@
   vertical-align: middle;
 }
 
-.reviews-star {
-  font-size: 1rem;
-  line-height: 1;
+.reviews-stars--sm .reviews-star-wrap {
+  width: 14px;
+  height: 14px;
 }
 
-/* review list */
+.reviews-stars--md .reviews-star-wrap {
+  width: 17px;
+  height: 17px;
+}
+
+.reviews-star-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.reviews-star-base,
+.reviews-star-fill {
+  position: absolute;
+  inset: 0;
+  line-height: 1;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans Symbols", sans-serif;
+}
+
+.reviews-star-base {
+  color: #ddd;
+}
+
+.reviews-star-fill {
+  color: #d7b25f;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -296,13 +326,16 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
-/* pagination */
 .reviews-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.reviews-pagination--top {
+  margin-top: 0.25rem;
 }
 
 .reviews-page-btn {
@@ -328,7 +361,6 @@
   font-size: 0.9rem;
 }
 
-/* create review block */
 .reviews-create-card {
   background: white;
   border-radius: 14px;
@@ -351,7 +383,6 @@
   color: rgba(0, 0, 0, 0.55);
 }
 
-/* star input */
 .reviews-star-input {
   display: flex;
   align-items: center;
@@ -363,7 +394,6 @@
   position: relative;
   width: 30px;
   height: 30px;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -375,6 +405,7 @@
   inset: 0;
   font-size: 1.65rem;
   line-height: 1;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans Symbols", sans-serif;
 }
 
 .reviews-star-input__base {
@@ -386,6 +417,28 @@
   overflow: hidden;
   white-space: nowrap;
   transition: width 0.12s ease;
+}
+
+.reviews-star-input__click-half,
+.reviews-star-input__click-full {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.reviews-star-input__click-half {
+  left: 0;
+  width: 50%;
+}
+
+.reviews-star-input__click-full {
+  right: 0;
+  width: 50%;
 }
 
 .reviews-rating-value {
