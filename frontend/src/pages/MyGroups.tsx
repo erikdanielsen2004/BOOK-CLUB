@@ -1,54 +1,108 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar.tsx";
 import GroupModal, { type GroupModalData } from "../components/GroupModal.tsx";
 import "../styles/MyGroups.css";
 
-// ── PLACEHOLDER
-const INITIAL_GROUPS: GroupModalData[] = [
-  {
-    id: "1",
-    name: "Fantasy Club",
-    description: "We read fantasy books and argue about them.",
-    owner: "user_001",
-    members: [
-      { id: "user_001", name: "Ailed",   initial: "A" },
-      { id: "user_002", name: "Brandon", initial: "B" },
-      { id: "user_003", name: "Carlos",  initial: "C" },
-    ],
-    bookCandidates: [
-      { id: "b1", title: "Dune",                  author: "Frank Herbert",       coverUrl: null, coverColor: "#e6a817" },
-      { id: "b2", title: "A Song of Ice and Fire", author: "George R.R. Martin", coverUrl: null, coverColor: "#8C2F39" },
-    ],
-    votes: [{ userId: "user_002", bookId: "b1" }],
-    createdAt: "2026-01-15T00:00:00.000Z",
-  },
-  {
-    id: "2",
-    name: "Sci-Fi Readers",
-    description: "",
-    owner: "user_002",
-    members: [
-      { id: "user_001", name: "Ailed",   initial: "A" },
-      { id: "user_002", name: "Brandon", initial: "B" },
-    ],
-    bookCandidates: [],
-    votes: [],
-    createdAt: "2026-02-20T00:00:00.000Z",
-  },
-];
+type StoredUser = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
 
-// PLACEHOLDER
-const CURRENT_USER_ID = "user_001";
+const fallbackCover = "#c4b9ae";
 
-// GROUP CARD
+function getStoredUser(): StoredUser | null {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function makeInitial(name: string) {
+  return name?.trim()?.charAt(0)?.toUpperCase() || "?";
+}
+
+function colorFromTitle(title: string) {
+  const colors = ["#8C2F39", "#7A5C61", "#B08968", "#6D597A", "#355070", "#588157"];
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) hash += title.charCodeAt(i);
+  return colors[hash % colors.length];
+}
+
+function mapGroup(group: any): GroupModalData {
+  return {
+    id: group._id,
+    name: group.name || "Untitled Group",
+    description: group.description || "",
+    owner: typeof group.owner === "string" ? group.owner : group.owner?._id || "",
+    members: Array.isArray(group.members)
+      ? group.members.map((member: any) => {
+          const fullName = `${member.firstName || ""} ${member.lastName || ""}`.trim() || "Unknown User";
+          return {
+            id: member._id,
+            name: fullName,
+            initial: makeInitial(member.firstName || fullName),
+          };
+        })
+      : [],
+    currentBook: group.currentBook
+      ? {
+          id: group.currentBook._id,
+          title: group.currentBook.title || "Untitled",
+          author: Array.isArray(group.currentBook.authors) ? group.currentBook.authors.join(", ") : "",
+          coverUrl: group.currentBook.thumbnail || null,
+          coverColor: colorFromTitle(group.currentBook.title || "Book"),
+          googleBooksId: group.currentBook.googleBooksId || "",
+          description: "",
+          categories: [],
+          pageCount: 0,
+          publishedDate: "",
+          averageRating: 0,
+          ratingsCount: 0,
+        }
+      : null,
+    bookCandidates: Array.isArray(group.bookCandidates)
+      ? group.bookCandidates.map((book: any) => ({
+          id: book._id,
+          googleBooksId: book.googleBooksId || "",
+          title: book.title || "Untitled",
+          author: Array.isArray(book.authors) ? book.authors.join(", ") : "",
+          coverUrl: book.thumbnail || null,
+          coverColor: colorFromTitle(book.title || "Book"),
+          description: book.description || "",
+          categories: Array.isArray(book.categories) ? book.categories : [],
+          pageCount: book.pageCount || 0,
+          publishedDate: book.publishedDate || "",
+          averageRating: book.averageRating || 0,
+          ratingsCount: book.ratingsCount || 0,
+        }))
+      : [],
+    votes: Array.isArray(group.votes)
+      ? group.votes.map((vote: any) => ({
+          id: vote._id,
+          userId: typeof vote.user === "string" ? vote.user : vote.user?._id || "",
+          bookId: typeof vote.book === "string" ? vote.book : vote.book?._id || "",
+        }))
+      : [],
+    voteSessionActive: !!group.voteSessionActive,
+    voteStartAt: group.voteStartAt || null,
+    voteEndAt: group.voteEndAt || null,
+    createdAt: group.createdAt,
+  };
+}
+
 const GroupCard: React.FC<{ group: GroupModalData; onClick: () => void }> = ({ group, onClick }) => {
-  const currentBook = group.bookCandidates[0] ?? null;
+  const currentBook = group.currentBook;
 
   return (
     <div className="group-card" onClick={onClick}>
       <div
         className="group-card__cover"
-        style={{ background: currentBook?.coverColor ?? "#c4b9ae" }}
+        style={{ background: currentBook?.coverColor ?? fallbackCover }}
       >
         {currentBook?.coverUrl && <img src={currentBook.coverUrl} alt={currentBook.title} />}
       </div>
@@ -56,18 +110,30 @@ const GroupCard: React.FC<{ group: GroupModalData; onClick: () => void }> = ({ g
       <div className="group-card__info">
         <h3 className="group-card__name">{group.name}</h3>
         <p className="group-card__members">{group.members.length} members</p>
-        {currentBook && (
+
+        {currentBook ? (
           <p className="group-card__book">
             Currently reading:{" "}
             <span className="group-card__book-title">{currentBook.title}</span>
-            <span className="group-card__book-author"> — {currentBook.author}</span>
+            {currentBook.author && (
+              <span className="group-card__book-author"> — {currentBook.author}</span>
+            )}
           </p>
+        ) : group.voteSessionActive ? (
+          <p className="group-card__book">
+            Voting in progress for next book
+          </p>
+        ) : (
+          <p className="group-card__book">No assigned book yet</p>
         )}
       </div>
 
       <button
         className="group-card__btn"
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
       >
         View Group
       </button>
@@ -75,22 +141,66 @@ const GroupCard: React.FC<{ group: GroupModalData; onClick: () => void }> = ({ g
   );
 };
 
-// GROUPS PAGE
 const MyGroups: React.FC = () => {
-  const [groups,        setGroups]   = useState<GroupModalData[]>(INITIAL_GROUPS);
-  const [search,        setSearch]   = useState("");
-  const [selectedGroup, setSelected] = useState<GroupModalData | null>(null);
+  const user = getStoredUser();
+  const currentUserId = user?._id || "";
 
-  const filteredGroups = groups.filter((g) =>
-    g.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const [groups, setGroups] = useState<GroupModalData[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState<GroupModalData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
+
+  const fetchGroups = async (searchValue = "") => {
+    if (!currentUserId) {
+      setPageError("You must be logged in to view groups.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setPageError("");
+
+      const query = new URLSearchParams();
+      if (searchValue.trim()) query.set("searchBar", searchValue.trim());
+
+      const res = await fetch(`/api/group-main/search/${currentUserId}?${query.toString()}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to load groups.");
+
+      const mapped = Array.isArray(data.groups) ? data.groups.map(mapGroup) : [];
+      setGroups(mapped);
+
+      setSelectedGroup((prev) => {
+        if (!prev) return null;
+        return mapped.find((g) => g.id === prev.id) || null;
+      });
+    } catch (err: any) {
+      setPageError(err.message || "Failed to load groups.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const filteredGroups = useMemo(() => {
+    if (!search.trim()) return groups;
+    return groups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()));
+  }, [groups, search]);
 
   const handleSave = (updated: GroupModalData) => {
     setGroups((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+    setSelectedGroup(updated);
   };
 
   const handleLeave = (groupId: string) => {
     setGroups((prev) => prev.filter((g) => g.id !== groupId));
+    setSelectedGroup(null);
   };
 
   return (
@@ -100,10 +210,11 @@ const MyGroups: React.FC = () => {
       <div className="groups-main">
         <div className="groups-header">
           <h1 className="groups-heading">Groups</h1>
+
           <div className="groups-search">
             <input
               type="text"
-              placeholder="Search groups..."
+              placeholder="Search my groups..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -111,28 +222,35 @@ const MyGroups: React.FC = () => {
           </div>
         </div>
 
-        <div className="groups-list">
-          {filteredGroups.length > 0 ? (
-            filteredGroups.map((group) => (
-              <GroupCard
-                key={group.id}
-                group={group}
-                onClick={() => setSelected(group)}
-              />
-            ))
-          ) : (
-            <p className="groups-empty">No groups found.</p>
-          )}
-        </div>
+        {pageError && <p className="groups-empty">{pageError}</p>}
+        {loading && <p className="groups-empty">Loading groups...</p>}
 
-        <button className="groups-join-btn">+ Join more groups</button>
+        {!loading && !pageError && (
+          <div className="groups-list">
+            {filteredGroups.length > 0 ? (
+              filteredGroups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  onClick={() => setSelectedGroup(group)}
+                />
+              ))
+            ) : (
+              <p className="groups-empty">No groups found.</p>
+            )}
+          </div>
+        )}
+
+        <button className="groups-join-btn" onClick={() => fetchGroups(search)}>
+          Refresh groups
+        </button>
       </div>
 
-      {selectedGroup && (
+      {selectedGroup && currentUserId && (
         <GroupModal
           group={selectedGroup}
-          currentUserId={CURRENT_USER_ID}
-          onClose={() => setSelected(null)}
+          currentUserId={currentUserId}
+          onClose={() => setSelectedGroup(null)}
           onSave={handleSave}
           onLeave={handleLeave}
         />
