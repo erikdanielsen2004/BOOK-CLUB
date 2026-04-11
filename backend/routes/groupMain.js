@@ -1,231 +1,348 @@
-.shelf-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f0ebe3;
+const express = require('express');
+const mongoose = require('mongoose');
+const User = require("../models/User.js");
+const Group = require("../models/Group.js");
+const router = express.Router();
+
+async function abortAndEnd(session, res, status, message) {
+    try { await session.abortTransaction(); }
+    catch (error) {}
+    finally { session.endSession(); }
+    return res.status(status).json({ message });
 }
 
-.shelf-main {
-  margin-left: 260px;
-  flex: 1;
-  padding: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
+function mapGroup(group) {
+    return {
+        _id: group._id,
+        name: group.name,
+        description: group.description || '',
+        owner: group.owner?._id || group.owner,
+        members: Array.isArray(group.members)
+            ? group.members.map((member) => ({
+                _id: member._id,
+                firstName: member.firstName || '',
+                lastName: member.lastName || ''
+            }))
+            : [],
+        currentBook: group.currentBook
+            ? {
+                _id: group.currentBook._id,
+                title: group.currentBook.title || 'Untitled',
+                authors: Array.isArray(group.currentBook.authors) ? group.currentBook.authors : [],
+                thumbnail: group.currentBook.thumbnail || ''
+            }
+            : null,
+        bookCandidates: Array.isArray(group.bookCandidates)
+            ? group.bookCandidates.map((book) => ({
+                _id: book._id,
+                googleBooksId: book.googleBooksId || '',
+                title: book.title || 'Untitled',
+                authors: Array.isArray(book.authors) ? book.authors : [],
+                thumbnail: book.thumbnail || '',
+                description: book.description || '',
+                categories: Array.isArray(book.categories) ? book.categories : [],
+                pageCount: book.pageCount || 0,
+                publishedDate: book.publishedDate || '',
+                averageRating: book.averageRating || 0,
+                ratingsCount: book.ratingsCount || 0
+            }))
+            : [],
+        votes: Array.isArray(group.votes)
+            ? group.votes.map((vote) => ({
+                _id: vote._id,
+                user: vote.user?._id || vote.user,
+                book: vote.book?._id || vote.book
+            }))
+            : [],
+        voteSessionActive: !!group.voteSessionActive,
+        voteStartAt: group.voteStartAt,
+        voteEndAt: group.voteEndAt,
+        createdAt: group.createdAt,
+        updatedAt: group.updatedAt
+    };
 }
 
-.shelf-heading {
-  font-family: 'Courier New', monospace;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #8b2323;
-  margin: 0;
+async function getPopulatedGroup(groupId) {
+    return Group.findById(groupId)
+        .populate("owner", "firstName lastName")
+        .populate("members", "firstName lastName")
+        .populate("currentBook", "title authors thumbnail googleBooksId")
+        .populate("bookCandidates", "googleBooksId title authors thumbnail description categories pageCount publishedDate averageRating ratingsCount")
+        .populate("votes.user", "firstName lastName")
+        .populate("votes.book", "title authors thumbnail");
 }
 
-.shelf-stats {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
+router.get("/search", async (req, res) => {
+    try {
+        const { searchBar } = req.query;
 
-.shelf-stat {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  min-width: 160px;
-}
+        let query = {};
+        if (searchBar) {
+            query = {
+                $or: [
+                    { name: { $regex: searchBar, $options: "i" } },
+                    { description: { $regex: searchBar, $options: "i" } }
+                ]
+            };
+        }
 
-.shelf-stat__number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1a0a0a;
-  font-family: Georgia, serif;
-}
+        const groups = await Group.find(query)
+            .populate("owner", "firstName lastName")
+            .populate("members", "firstName lastName")
+            .populate("currentBook", "title authors thumbnail googleBooksId")
+            .populate("bookCandidates", "googleBooksId title authors thumbnail description categories pageCount publishedDate averageRating ratingsCount")
+            .populate("votes.user", "firstName lastName")
+            .populate("votes.book", "title authors thumbnail")
+            .sort({ createdAt: -1 });
 
-.shelf-stat__label {
-  font-size: 0.8rem;
-  color: rgba(0, 0, 0, 0.5);
-  font-family: 'Courier New', monospace;
-}
+        return res.status(200).json({ message: "Search success.", groups: groups.map(mapGroup) });
 
-.shelf-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Server error." });
+    }
+});
 
-.shelf-tab {
-  background: transparent;
-  border: none;
-  padding: 0.6rem 1.5rem;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  color: rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s;
-}
+router.get("/search/:userId", async (req, res) => {
+    try {
+        const { searchBar } = req.query;
+        const { userId } = req.params;
 
-.shelf-tab:hover {
-  color: #8b2323;
-}
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
 
-.shelf-tab--active {
-  color: #8b2323;
-  border-bottom-color: #8b2323;
-  font-weight: 700;
-}
+        let query = { _id: { $in: user.joinedGroups } };
+        if (searchBar) {
+            query.$or = [
+                { name: { $regex: searchBar, $options: "i" } },
+                { description: { $regex: searchBar, $options: "i" } }
+            ];
+        }
 
-.shelf-search {
-  position: relative;
-  max-width: 320px;
-}
+        const groups = await Group.find(query)
+            .populate("owner", "firstName lastName")
+            .populate("members", "firstName lastName")
+            .populate("currentBook", "title authors thumbnail googleBooksId")
+            .populate("bookCandidates", "googleBooksId title authors thumbnail description categories pageCount publishedDate averageRating ratingsCount")
+            .populate("votes.user", "firstName lastName")
+            .populate("votes.book", "title authors thumbnail")
+            .sort({ createdAt: -1 });
 
-.shelf-search input {
-  width: 100%;
-  padding: 0.7rem 2.5rem 0.7rem 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 999px;
-  background: white;
-  font-size: 0.9rem;
-  color: #1a0a0a;
-  outline: none;
-  transition: border-color 0.2s;
-  font-family: 'PT Mono', monospace;
-}
+        return res.status(200).json({ message: "Search success.", groups: groups.map(mapGroup) });
 
-.shelf-search input:focus {
-  border-color: #8b2323;
-}
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Server error." });
+    }
+});
 
-.shelf-search input::placeholder {
-  color: rgba(0, 0, 0, 0.35);
-}
+router.post("/create/:userId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-.shelf-search__icon {
-  position: absolute;
-  right: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.85rem;
-  pointer-events: none;
-}
+    try {
+        const { name, description } = req.body;
+        const { userId } = req.params;
 
-.shelf-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-}
+        if (!name || name.trim() === "") return abortAndEnd(session, res, 400, "Group name cannot be empty.");
 
-.shelf-empty {
-  color: rgba(0, 0, 0, 0.4);
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-}
+        const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
-.shelf-book {
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
+        const group = new Group({
+            name: name.trim(),
+            description: description?.trim() || "",
+            owner: userId,
+            members: [userId],
+            bookCandidates: [],
+            votes: [],
+            voteSessionActive: false,
+            voteStartAt: null,
+            voteEndAt: null
+        });
 
-.shelf-book:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
+        await group.save({ session });
 
-.shelf-book__cover {
-  width: 100%;
-  height: 240px;
-  overflow: hidden;
-  background: #ddd;
-}
+        user.createdGroups.push(group._id);
+        user.joinedGroups.push(group._id);
+        await user.save({ session });
 
-.shelf-book__cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+        await session.commitTransaction();
+        session.endSession();
 
-.shelf-book__cover-placeholder {
-  width: 100%;
-  height: 100%;
-}
+        const populatedGroup = await getPopulatedGroup(group._id);
 
-.shelf-book__info {
-  padding: 0.8rem 0.85rem 0.95rem;
-}
+        return res.status(201).json({
+            message: "Group created successfully.",
+            group: mapGroup(populatedGroup)
+        });
 
-.shelf-book__title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #1a0a0a;
-  font-family: Georgia, serif;
-  line-height: 1.35;
-  margin: 0;
-}
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
 
-.shelf-book__author {
-  font-size: 0.72rem;
-  color: rgba(0, 0, 0, 0.5);
-  margin-top: 0.35rem;
-  line-height: 1.35;
-}
+router.put("/edit/:userId/:groupId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-.shelf-book__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 0.85rem;
-}
+    try {
+        const { userId, groupId } = req.params;
+        const { name, description } = req.body;
 
-.shelf-book__btn {
-  border: 1px solid #8b2323;
-  background: transparent;
-  color: #8b2323;
-  border-radius: 999px;
-  padding: 0.38rem 0.72rem;
-  font-family: 'PT Mono', monospace;
-  font-size: 0.68rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+        if (!name || !name.trim()) {
+            return abortAndEnd(session, res, 400, "Group name cannot be empty.");
+        }
 
-.shelf-book__btn:hover {
-  background: #8b2323;
-  color: white;
-}
+        const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
-.shelf-book__btn--danger {
-  border-color: rgba(0, 0, 0, 0.2);
-  color: rgba(0, 0, 0, 0.65);
-}
+        const group = await Group.findById(groupId).session(session);
+        if (!group) return abortAndEnd(session, res, 404, "Group not found.");
+        if (group.owner.toString() !== userId) return abortAndEnd(session, res, 403, "Access denied.");
 
-.shelf-book__btn--danger:hover {
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-}
+        group.name = name.trim();
+        group.description = description?.trim() || "";
+        await group.save({ session });
 
-@media (max-width: 768px) {
-  .shelf-main {
-    margin-left: 0;
-    padding: 1.5rem;
-  }
+        await session.commitTransaction();
+        session.endSession();
 
-  .shelf-book {
-    width: 170px;
-  }
+        const populatedGroup = await getPopulatedGroup(groupId);
 
-  .shelf-book__cover {
-    height: 220px;
-  }
-}
+        return res.status(200).json({
+            message: "Group updated successfully.",
+            group: mapGroup(populatedGroup)
+        });
+
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+router.delete("/delete/:userId/:groupId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { userId, groupId } = req.params;
+
+        const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
+
+        const group = await Group.findById(groupId).session(session);
+        if (!group) return abortAndEnd(session, res, 404, "Group not found.");
+        if (group.owner.toString() !== userId) return abortAndEnd(session, res, 403, "Access denied.");
+
+        await User.updateMany(
+            { _id: { $in: group.members } },
+            { $pull: { joinedGroups: groupId, createdGroups: groupId } },
+            { session }
+        );
+
+        await Group.findByIdAndDelete(groupId).session(session);
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).json({ message: "Group deleted successfully." });
+
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+router.post("/join/:userId/:groupId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { userId, groupId } = req.params;
+
+        const user = await User.findById(userId).session(session);
+        const group = await Group.findById(groupId).session(session);
+        if (!user || !group) return abortAndEnd(session, res, 404, "User or group not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
+
+        const isMember = group.members.some(member => member.toString() === userId);
+        if (isMember) return abortAndEnd(session, res, 409, "User is already in this group.");
+
+        group.members = [...new Set([...group.members, user._id])];
+        user.joinedGroups = [...new Set([...user.joinedGroups, group._id])];
+
+        await group.save({ session });
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+        return res.status(200).json({ message: "Group joined successfully." });
+
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+router.post("/leave/:userId/:groupId", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { userId, groupId } = req.params;
+        let ownerTransfer = false;
+
+        const user = await User.findById(userId).session(session);
+        const group = await Group.findById(groupId).session(session);
+        if (!user || !group) return abortAndEnd(session, res, 404, "User or group not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
+
+        const isMember = group.members.some(member => member.toString() === userId);
+        if (!isMember) return abortAndEnd(session, res, 400, "User is not in this group.");
+
+        if (group.owner.toString() === userId) {
+            ownerTransfer = true;
+
+            if (group.members.length === 1) {
+                await User.updateOne(
+                    { _id: userId },
+                    { $pull: { joinedGroups: group._id, createdGroups: group._id } },
+                    { session }
+                );
+                await Group.findByIdAndDelete(groupId).session(session);
+
+                await session.commitTransaction();
+                session.endSession();
+                return res.status(200).json({ message: "Left and deleted group successfully." });
+            }
+
+            const newOwner = group.members.find(member => member.toString() !== userId);
+            group.owner = newOwner;
+        }
+
+        group.members = group.members.filter(member => member.toString() !== userId);
+        user.joinedGroups = user.joinedGroups.filter(group => group.toString() !== groupId);
+        user.createdGroups = user.createdGroups.filter(group => group.toString() !== groupId);
+        group.votes = group.votes.filter(vote => vote.user.toString() !== userId);
+
+        await group.save({ session });
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        const response = { message: "Group left successfully." };
+        if (ownerTransfer) response.newOwner = group.owner;
+        return res.status(200).json(response);
+
+    } catch (error) {
+        console.error(error.message);
+        return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+module.exports = router;
