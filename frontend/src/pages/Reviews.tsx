@@ -3,7 +3,8 @@ import Sidebar from "../components/Sidebar.tsx";
 import "../styles/Reviews.css";
 
 type UserData = {
-  id: string;
+  id?: string;
+  _id?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -62,26 +63,23 @@ const getStoredUser = (): UserData | null => {
   }
 };
 
-const renderStars = (rating: number) => {
-  return [1, 2, 3, 4, 5].map((star) => {
-    let fill = 0;
-    if (rating >= star) fill = 100;
-    else if (rating >= star - 0.5) fill = 50;
+const StarDisplay: React.FC<{ rating: number; size?: "sm" | "md" }> = ({ rating, size = "sm" }) => {
+  return (
+    <span className={`reviews-stars reviews-stars--${size}`} aria-label={`${rating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((star) => {
+        const fill = rating >= star ? 100 : rating >= star - 0.5 ? 50 : 0;
 
-    return (
-      <span
-        key={star}
-        className="reviews-star"
-        style={{
-          background: `linear-gradient(90deg, #d7b25f ${fill}%, #ddd ${fill}%)`,
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent"
-        }}
-      >
-        ★
-      </span>
-    );
-  });
+        return (
+          <span key={star} className="reviews-star-wrap">
+            <span className="reviews-star-base">★</span>
+            <span className="reviews-star-fill" style={{ width: `${fill}%` }}>
+              ★
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
 };
 
 const HalfStarInput: React.FC<{
@@ -109,31 +107,17 @@ const HalfStarInput: React.FC<{
 
             <button
               type="button"
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                width: "50%",
-                height: "100%",
-                opacity: 0,
-                cursor: "pointer"
-              }}
+              className="reviews-star-input__click-half"
               onMouseEnter={() => setHoverValue(star - 0.5)}
               onClick={() => onChange(star - 0.5)}
+              aria-label={`Rate ${star - 0.5} out of 5`}
             />
             <button
               type="button"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
-                width: "50%",
-                height: "100%",
-                opacity: 0,
-                cursor: "pointer"
-              }}
+              className="reviews-star-input__click-full"
               onMouseEnter={() => setHoverValue(star)}
               onClick={() => onChange(star)}
+              aria-label={`Rate ${star} out of 5`}
             />
           </div>
         );
@@ -146,6 +130,7 @@ const HalfStarInput: React.FC<{
 
 const Reviews: React.FC = () => {
   const user = useMemo(() => getStoredUser(), []);
+  const userId = user?.id || user?._id || "";
 
   const [searchText, setSearchText] = useState("");
   const [reviewedBooks, setReviewedBooks] = useState<ReviewedBook[]>([]);
@@ -159,6 +144,8 @@ const Reviews: React.FC = () => {
   const [selectedHasReadBook, setSelectedHasReadBook] = useState<HasReadBook | null>(null);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
+
+  const [writePage, setWritePage] = useState(1);
 
   const [message, setMessage] = useState("");
   const [toast, setToast] = useState("");
@@ -204,28 +191,29 @@ const Reviews: React.FC = () => {
     }
   };
 
-  const searchHasReadBooks = async () => {
-    if (!user?.id) return;
+  const loadHasReadBooks = async (query = "") => {
+    if (!userId) return;
 
     try {
       const res = await fetch(
-        `/api/book-reviews/user-hasread/${user.id}?q=${encodeURIComponent(writeSearch)}`
+        `/api/book-reviews/user-hasread/${userId}?q=${encodeURIComponent(query)}`
       );
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Could not search your Has Read books.");
+        setMessage(data.message || "Could not load your Has Read books.");
         return;
       }
 
       setHasReadBooks(data.books || []);
+      setWritePage(1);
     } catch {
-      setMessage("Could not search your Has Read books.");
+      setMessage("Could not load your Has Read books.");
     }
   };
 
   const submitReview = async () => {
-    if (!user?.id || !selectedHasReadBook) return;
+    if (!userId || !selectedHasReadBook) return;
 
     if (rating < 0.5) {
       setMessage("Please choose a rating.");
@@ -234,7 +222,7 @@ const Reviews: React.FC = () => {
 
     try {
       const res = await fetch(
-        `/api/book-reviews/create/${selectedHasReadBook._id}/${user.id}`,
+        `/api/book-reviews/create/${selectedHasReadBook._id}/${userId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -257,8 +245,8 @@ const Reviews: React.FC = () => {
       setReviewText("");
       setRating(0);
       setWriteSearch("");
-      setHasReadBooks([]);
 
+      await loadHasReadBooks("");
       if (selectedBook && selectedBook._id === selectedHasReadBook._id) {
         fetchBookReviews(selectedBook._id, sort, 1);
       }
@@ -270,10 +258,10 @@ const Reviews: React.FC = () => {
   };
 
   const deleteReview = async (reviewId: string) => {
-    if (!user?.id || !selectedBook) return;
+    if (!userId || !selectedBook) return;
 
     try {
-      const res = await fetch(`/api/book-reviews/delete/${user.id}/${reviewId}`, {
+      const res = await fetch(`/api/book-reviews/delete/${userId}/${reviewId}`, {
         method: "DELETE"
       });
 
@@ -294,6 +282,7 @@ const Reviews: React.FC = () => {
 
   useEffect(() => {
     searchReviewedBooks("");
+    loadHasReadBooks("");
   }, []);
 
   useEffect(() => {
@@ -301,6 +290,29 @@ const Reviews: React.FC = () => {
       fetchBookReviews(selectedBook._id, sort, page);
     }
   }, [sort, page]);
+
+  const filteredHasReadBooks = useMemo(() => {
+    const q = writeSearch.trim().toLowerCase();
+    if (!q) return hasReadBooks;
+
+    return hasReadBooks.filter((book) =>
+      book.title.toLowerCase().includes(q) ||
+      (book.authors?.join(", ").toLowerCase().includes(q) ?? false)
+    );
+  }, [hasReadBooks, writeSearch]);
+
+  const writeBooksPerPage = 5;
+  const writeTotalPages = Math.max(1, Math.ceil(filteredHasReadBooks.length / writeBooksPerPage));
+  const paginatedHasReadBooks = filteredHasReadBooks.slice(
+    (writePage - 1) * writeBooksPerPage,
+    writePage * writeBooksPerPage
+  );
+
+  useEffect(() => {
+    if (writePage > writeTotalPages) {
+      setWritePage(1);
+    }
+  }, [writePage, writeTotalPages]);
 
   return (
     <div className="reviews-layout">
@@ -347,7 +359,7 @@ const Reviews: React.FC = () => {
                 </div>
                 <div className="reviews-book-chip__rating">
                   {book.averageRatingDb.toFixed(2)}
-                  <span className="reviews-stars">{renderStars(book.averageRatingDb)}</span>
+                  <StarDisplay rating={book.averageRatingDb} />
                   {" · "}
                   {book.reviewCount} review{book.reviewCount !== 1 ? "s" : ""}
                 </div>
@@ -365,29 +377,59 @@ const Reviews: React.FC = () => {
               type="text"
               placeholder="Search your Has Read books..."
               value={writeSearch}
-              onChange={(e) => setWriteSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchHasReadBooks()}
+              onChange={(e) => {
+                setWriteSearch(e.target.value);
+                setWritePage(1);
+              }}
             />
-            <button className="reviews-btn reviews-btn--secondary" type="button" onClick={searchHasReadBooks}>
+            <button className="reviews-btn reviews-btn--secondary" type="button" onClick={() => loadHasReadBooks(writeSearch)}>
               Search
             </button>
           </div>
 
-          {hasReadBooks.length > 0 && (
-            <div className="reviews-book-search-results">
-              {hasReadBooks.map((book) => (
-                <div
-                  key={book._id}
-                  className="reviews-book-chip"
-                  onClick={() => setSelectedHasReadBook(book)}
-                >
-                  <div className="reviews-book-chip__title">{book.title}</div>
-                  <div className="reviews-book-chip__meta">
-                    {book.authors?.join(", ") || "Unknown"}
+          {paginatedHasReadBooks.length > 0 ? (
+            <>
+              <div className="reviews-book-search-results">
+                {paginatedHasReadBooks.map((book) => (
+                  <div
+                    key={book._id}
+                    className={`reviews-book-chip ${selectedHasReadBook?._id === book._id ? "reviews-book-chip--selected" : ""}`}
+                    onClick={() => setSelectedHasReadBook(book)}
+                  >
+                    <div className="reviews-book-chip__title">{book.title}</div>
+                    <div className="reviews-book-chip__meta">
+                      {book.authors?.join(", ") || "Unknown"}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              <div className="reviews-pagination reviews-pagination--top">
+                <button
+                  className="reviews-page-btn"
+                  type="button"
+                  disabled={writePage <= 1}
+                  onClick={() => setWritePage((p) => p - 1)}
+                >
+                  Previous
+                </button>
+
+                <span className="reviews-page-label">
+                  Page {writePage} of {writeTotalPages}
+                </span>
+
+                <button
+                  className="reviews-page-btn"
+                  type="button"
+                  disabled={writePage >= writeTotalPages}
+                  onClick={() => setWritePage((p) => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="reviews-empty">No Has Read books found.</div>
           )}
 
           {selectedHasReadBook && (
@@ -431,7 +473,7 @@ const Reviews: React.FC = () => {
                 </div>
                 <div className="reviews-book-card__avg">
                   {viewData.averageRating.toFixed(2)}
-                  <span className="reviews-stars">{renderStars(viewData.averageRating)}</span>
+                  <StarDisplay rating={viewData.averageRating} size="md" />
                   {" · "}
                   {viewData.reviewCount} review{viewData.reviewCount !== 1 ? "s" : ""}
                 </div>
@@ -476,7 +518,7 @@ const Reviews: React.FC = () => {
                         <div>
                           <div className="reviews-card__rating">
                             {review.rating.toFixed(1)}
-                            <span className="reviews-stars">{renderStars(review.rating)}</span>
+                            <StarDisplay rating={review.rating} />
                           </div>
 
                           {isMine && (
