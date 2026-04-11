@@ -142,16 +142,22 @@ const GroupModal: React.FC<GroupModalProps> = ({
   const [bookSearch, setBookSearch] = useState("");
   const [searchResults, setSearchResults] = useState<BookCandidate[]>([]);
   const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [durationDays, setDurationDays] = useState(3);
+  const [editName, setEditName] = useState(group.name);
+  const [editDescription, setEditDescription] = useState(group.description);
 
   useEffect(() => {
     setGroupState(group);
+    setEditName(group.name);
+    setEditDescription(group.description);
   }, [group]);
 
   const isOwner = groupState.owner === currentUserId;
+  const isMember = groupState.members.some((m) => m.id === currentUserId);
+
   const myVote = groupState.votes.find((v) => v.userId === currentUserId)?.bookId ?? null;
 
   const voteExpired = useMemo(() => {
@@ -159,14 +165,43 @@ const GroupModal: React.FC<GroupModalProps> = ({
     return new Date(groupState.voteEndAt).getTime() <= Date.now();
   }, [groupState.voteEndAt]);
 
-  const canVote = groupState.voteSessionActive && !voteExpired;
+  const canVote = isMember && groupState.voteSessionActive && !voteExpired;
 
   const voteCount = (bookId: string) =>
     groupState.votes.filter((v) => v.bookId === bookId).length;
 
-  const setAndSaveGroup = (updated: GroupModalData) => {
+  const updateLocalAndParent = (updated: GroupModalData) => {
     setGroupState(updated);
     onSave(updated);
+  };
+
+  const handleEditGroup = async () => {
+    if (!isOwner) return;
+
+    try {
+      setWorking(true);
+      setMessage("");
+
+      const res = await fetch(`/api/group-main/edit/${currentUserId}/${groupState.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          description: editDescription,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update group.");
+
+      const updated = mapGroup(data.group);
+      updateLocalAndParent(updated);
+      setMessage("Group updated successfully.");
+    } catch (err: any) {
+      setMessage(err.message || "Failed to update group.");
+    } finally {
+      setWorking(false);
+    }
   };
 
   const handleBookSearch = async () => {
@@ -215,7 +250,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!isOwner) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-owner/add-to-list/${currentUserId}/${groupState.id}`, {
@@ -239,14 +274,14 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to add book.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
+      updateLocalAndParent(updated);
       setSearchResults([]);
       setBookSearch("");
-      setMessage("Book added.");
+      setMessage("Book added successfully.");
     } catch (err: any) {
       setMessage(err.message || "Failed to add book.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -254,7 +289,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!isOwner) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-owner/remove-from-list/${currentUserId}/${groupState.id}/${bookId}`, {
@@ -265,12 +300,12 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to remove book.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
+      updateLocalAndParent(updated);
       setMessage("Book removed.");
     } catch (err: any) {
       setMessage(err.message || "Failed to remove book.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -278,7 +313,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!isOwner) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-owner/${currentUserId}/${groupState.id}/publish-list`, {
@@ -289,12 +324,12 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to publish list.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
-      setMessage("Candidate list published.");
+      updateLocalAndParent(updated);
+      setMessage("List published successfully.");
     } catch (err: any) {
       setMessage(err.message || "Failed to publish list.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -302,7 +337,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!isOwner) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-owner/start-vote/${currentUserId}/${groupState.id}`, {
@@ -315,13 +350,13 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to start vote.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
+      updateLocalAndParent(updated);
       setActiveTab("vote");
       setMessage("Vote started.");
     } catch (err: any) {
       setMessage(err.message || "Failed to start vote.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -329,7 +364,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!canVote) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-voting/cast-vote/${currentUserId}/${groupState.id}/${bookId}`, {
@@ -340,12 +375,12 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to cast vote.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
+      updateLocalAndParent(updated);
       setMessage("Vote saved.");
     } catch (err: any) {
       setMessage(err.message || "Failed to cast vote.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -353,7 +388,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     if (!isOwner) return;
 
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const res = await fetch(`/api/group-voting/vote-ended/${currentUserId}/${groupState.id}`, {
@@ -364,18 +399,18 @@ const GroupModal: React.FC<GroupModalProps> = ({
       if (!res.ok) throw new Error(data.message || "Failed to end vote.");
 
       const updated = mapGroup(data.group);
-      setAndSaveGroup(updated);
+      updateLocalAndParent(updated);
       setMessage(data.message || "Vote ended.");
     } catch (err: any) {
       setMessage(err.message || "Failed to end vote.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
   const handleLeave = async () => {
     try {
-      setSaving(true);
+      setWorking(true);
       setMessage("");
 
       const endpoint = isOwner
@@ -394,7 +429,7 @@ const GroupModal: React.FC<GroupModalProps> = ({
     } catch (err: any) {
       setMessage(err.message || "Failed to leave group.");
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   };
 
@@ -416,32 +451,30 @@ const GroupModal: React.FC<GroupModalProps> = ({
         <div className="gmodal__header">
           <div>
             <h2 className="gmodal__name">{groupState.name}</h2>
-            {groupState.description && (
-              <p className="gmodal__desc">{groupState.description}</p>
-            )}
-            <p className="gmodal__desc" style={{ marginTop: "0.35rem" }}>
-              {voteStatusText}
-            </p>
+            {groupState.description && <p className="gmodal__desc">{groupState.description}</p>}
+            <p className="gmodal__desc gmodal__desc--status">{voteStatusText}</p>
           </div>
-          <span className="gmodal__member-count">
-            {groupState.members.length} members
-          </span>
+
+          <div className="gmodal__header-side">
+            <span className="gmodal__member-count">{groupState.members.length} members</span>
+            {isOwner && <span className="gmodal__header-badge">You own this group</span>}
+          </div>
         </div>
 
         <div className="gmodal__tabs">
           <TabBtn label="Info" active={activeTab === "info"} onClick={() => setActiveTab("info")} />
-          <TabBtn label="Book Candidates" active={activeTab === "books"} onClick={() => setActiveTab("books")} />
+          <TabBtn label="Books" active={activeTab === "books"} onClick={() => setActiveTab("books")} />
           <TabBtn label="Vote" active={activeTab === "vote"} onClick={() => setActiveTab("vote")} />
         </div>
 
-        {message && <p className="gmodal__meta">{message}</p>}
+        {message && <p className="gmodal__message">{message}</p>}
 
         {activeTab === "info" && (
           <div className="gmodal__content">
             {groupState.currentBook && (
-              <>
-                <p className="gmodal__section-label">Current assigned book</p>
-                <div className="gmodal__candidate">
+              <div className="gmodal__block">
+                <p className="gmodal__section-label">Assigned book</p>
+                <div className="gmodal__book-card">
                   <div
                     className="gmodal__candidate-cover"
                     style={{ background: groupState.currentBook.coverColor }}
@@ -455,45 +488,80 @@ const GroupModal: React.FC<GroupModalProps> = ({
                     <p className="gmodal__candidate-author">{groupState.currentBook.author}</p>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
-            <p className="gmodal__section-label">Members</p>
-            <div className="gmodal__members">
-              {groupState.members.map((m) => (
-                <div key={m.id} className="gmodal__member">
-                  <div className="gmodal__member-avatar">{m.initial}</div>
-                  <span className="gmodal__member-name">
-                    {m.name}
-                    {m.id === groupState.owner && (
-                      <span className="gmodal__owner-badge"> Owner</span>
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {isOwner && (
+              <div className="gmodal__block">
+                <p className="gmodal__section-label">Edit group</p>
+                <div className="gmodal__form-grid">
+                  <label className="gmodal__field">
+                    <span>Name</span>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                  </label>
 
-            {!confirmLeave ? (
-              <button
-                className="gmodal__leave-btn"
-                onClick={() => setConfirmLeave(true)}
-                disabled={saving}
-              >
-                {isOwner ? "Delete group" : "Leave group"}
-              </button>
-            ) : (
-              <div className="gmodal__confirm">
-                <p>Are you sure?</p>
-                <div className="gmodal__confirm-actions">
-                  <button className="gmodal__confirm-yes" onClick={handleLeave} disabled={saving}>
-                    Yes, {isOwner ? "delete" : "leave"}
-                  </button>
-                  <button className="gmodal__confirm-no" onClick={() => setConfirmLeave(false)} disabled={saving}>
-                    Cancel
+                  <label className="gmodal__field">
+                    <span>Description</span>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={4}
+                    />
+                  </label>
+
+                  <button className="gmodal__btn gmodal__btn--save gmodal__btn--fit" onClick={handleEditGroup} disabled={working}>
+                    Save group info
                   </button>
                 </div>
               </div>
             )}
+
+            <div className="gmodal__block">
+              <p className="gmodal__section-label">Members</p>
+              <div className="gmodal__members">
+                {groupState.members.map((m) => (
+                  <div key={m.id} className="gmodal__member">
+                    <div className="gmodal__member-avatar">{m.initial}</div>
+                    <span className="gmodal__member-name">
+                      {m.name}
+                      {m.id === groupState.owner && (
+                        <span className="gmodal__owner-badge"> Owner</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="gmodal__block">
+              <p className="gmodal__section-label">Membership</p>
+
+              {!confirmLeave ? (
+                <button
+                  className="gmodal__leave-btn"
+                  onClick={() => setConfirmLeave(true)}
+                  disabled={working}
+                >
+                  {isOwner ? "Delete group" : "Leave group"}
+                </button>
+              ) : (
+                <div className="gmodal__confirm">
+                  <p>Are you sure?</p>
+                  <div className="gmodal__confirm-actions">
+                    <button className="gmodal__confirm-yes" onClick={handleLeave} disabled={working}>
+                      Yes, {isOwner ? "delete" : "leave"}
+                    </button>
+                    <button className="gmodal__confirm-no" onClick={() => setConfirmLeave(false)} disabled={working}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -501,150 +569,159 @@ const GroupModal: React.FC<GroupModalProps> = ({
           <div className="gmodal__content">
             {isOwner ? (
               <>
-                <p className="gmodal__section-label">Search and add candidate books</p>
+                <div className="gmodal__block">
+                  <p className="gmodal__section-label">Search books to add</p>
+                  <div className="gmodal__book-search">
+                    <input
+                      type="text"
+                      placeholder="Search for a book..."
+                      value={bookSearch}
+                      onChange={(e) => setBookSearch(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleBookSearch()}
+                    />
+                    <button onClick={handleBookSearch} disabled={searching || working}>
+                      {searching ? "..." : "Search"}
+                    </button>
+                  </div>
 
-                <div className="gmodal__book-search">
-                  <input
-                    type="text"
-                    placeholder="Search for a book..."
-                    value={bookSearch}
-                    onChange={(e) => setBookSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleBookSearch()}
-                  />
-                  <button onClick={handleBookSearch} disabled={searching || saving}>
-                    {searching ? "..." : "Search"}
-                  </button>
+                  {searchResults.length > 0 && (
+                    <div className="gmodal__search-results">
+                      {searchResults.map((r) => (
+                        <div
+                          key={`${r.googleBooksId || r.id}`}
+                          className="gmodal__search-result"
+                          onClick={() => handleAddCandidate(r)}
+                        >
+                          <div className="gmodal__result-cover" style={{ background: r.coverColor }}>
+                            {r.coverUrl && <img src={r.coverUrl} alt={r.title} />}
+                          </div>
+                          <div>
+                            <p className="gmodal__result-title">{r.title}</p>
+                            <p className="gmodal__result-author">{r.author}</p>
+                          </div>
+                          <span className="gmodal__result-add">+ Add</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {searchResults.length > 0 && (
-                  <div className="gmodal__search-results">
-                    {searchResults.map((r) => (
-                      <div
-                        key={`${r.googleBooksId || r.id}`}
-                        className="gmodal__search-result"
-                        onClick={() => handleAddCandidate(r)}
-                      >
-                        <div className="gmodal__result-cover" style={{ background: r.coverColor }}>
-                          {r.coverUrl && <img src={r.coverUrl} alt={r.title} />}
-                        </div>
-                        <div>
-                          <p className="gmodal__result-title">{r.title}</p>
-                          <p className="gmodal__result-author">{r.author}</p>
-                        </div>
-                        <span className="gmodal__result-add">+ Add</span>
-                      </div>
-                    ))}
+                <div className="gmodal__block">
+                  <p className="gmodal__section-label">Owner actions</p>
+                  <div className="gmodal__inline-actions">
+                    <button className="gmodal__btn gmodal__btn--save" onClick={handlePublishList} disabled={working}>
+                      Publish list
+                    </button>
+
+                    <select
+                      className="gmodal__select"
+                      value={durationDays}
+                      onChange={(e) => setDurationDays(Number(e.target.value))}
+                      disabled={working}
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                        <option key={day} value={day}>
+                          {day} day{day !== 1 ? "s" : ""}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button className="gmodal__btn gmodal__btn--save" onClick={handleStartVote} disabled={working}>
+                      Start vote
+                    </button>
                   </div>
-                )}
-
-                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-                  <button className="gmodal__btn gmodal__btn--save" onClick={handlePublishList} disabled={saving}>
-                    Publish list
-                  </button>
-
-                  <select
-                    value={durationDays}
-                    onChange={(e) => setDurationDays(Number(e.target.value))}
-                    style={{ padding: "0.55rem 0.8rem", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.2)" }}
-                    disabled={saving}
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                      <option key={day} value={day}>
-                        {day} day{day !== 1 ? "s" : ""}
-                      </option>
-                    ))}
-                  </select>
-
-                  <button className="gmodal__btn gmodal__btn--save" onClick={handleStartVote} disabled={saving}>
-                    Start vote
-                  </button>
                 </div>
               </>
             ) : (
-              <p className="gmodal__empty">Only the group owner can edit candidate books.</p>
+              <p className="gmodal__empty">Only the owner can change group books.</p>
             )}
 
-            <p className="gmodal__section-label" style={{ marginTop: "1rem" }}>
-              Current candidates
-            </p>
+            <div className="gmodal__block">
+              <p className="gmodal__section-label">Current candidates</p>
 
-            {groupState.bookCandidates.length === 0 ? (
-              <p className="gmodal__empty">No candidates yet.</p>
-            ) : (
-              <div className="gmodal__candidates">
-                {groupState.bookCandidates.map((c) => (
-                  <div key={c.id} className="gmodal__candidate">
-                    <div
-                      className="gmodal__candidate-cover"
-                      style={{ background: c.coverColor }}
-                    >
-                      {c.coverUrl && <img src={c.coverUrl} alt={c.title} />}
-                    </div>
-                    <div className="gmodal__candidate-info">
-                      <p className="gmodal__candidate-title">{c.title}</p>
-                      <p className="gmodal__candidate-author">{c.author}</p>
-                    </div>
-
-                    {isOwner && !groupState.voteSessionActive && (
-                      <button
-                        className="gmodal__candidate-remove"
-                        onClick={() => handleRemoveCandidate(c.id)}
-                        aria-label="Remove candidate"
-                        disabled={saving}
+              {groupState.bookCandidates.length === 0 ? (
+                <p className="gmodal__empty">No candidates yet.</p>
+              ) : (
+                <div className="gmodal__candidates">
+                  {groupState.bookCandidates.map((c) => (
+                    <div key={c.id} className="gmodal__candidate">
+                      <div
+                        className="gmodal__candidate-cover"
+                        style={{ background: c.coverColor }}
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                        {c.coverUrl && <img src={c.coverUrl} alt={c.title} />}
+                      </div>
+
+                      <div className="gmodal__candidate-info">
+                        <p className="gmodal__candidate-title">{c.title}</p>
+                        <p className="gmodal__candidate-author">{c.author}</p>
+                      </div>
+
+                      {isOwner && !groupState.voteSessionActive && (
+                        <button
+                          className="gmodal__candidate-remove"
+                          onClick={() => handleRemoveCandidate(c.id)}
+                          aria-label="Remove candidate"
+                          disabled={working}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === "vote" && (
           <div className="gmodal__content">
-            <p className="gmodal__section-label">
-              {canVote
-                ? "Click a book to cast or replace your vote"
-                : groupState.voteSessionActive && voteExpired
-                ? "Voting expired. The owner can end the vote now."
-                : "No active vote right now"}
-            </p>
+            <div className="gmodal__block">
+              <p className="gmodal__section-label">
+                {canVote
+                  ? "Click a book to cast or replace your vote"
+                  : groupState.voteSessionActive && voteExpired
+                  ? "Voting has expired. The owner can end the vote now."
+                  : "There is no active vote right now"}
+              </p>
 
-            {groupState.bookCandidates.length === 0 ? (
-              <p className="gmodal__empty">No book candidates yet.</p>
-            ) : (
-              <div className="gmodal__vote-list">
-                {groupState.bookCandidates.map((c) => (
-                  <div
-                    key={c.id}
-                    className={`gmodal__vote-option ${myVote === c.id ? "gmodal__vote-option--voted" : ""}`}
-                    onClick={() => canVote && handleVote(c.id)}
-                    style={{ opacity: canVote ? 1 : 0.85, cursor: canVote ? "pointer" : "default" }}
-                  >
-                    <div className="gmodal__vote-cover" style={{ background: c.coverColor }}>
-                      {c.coverUrl && <img src={c.coverUrl} alt={c.title} />}
+              {groupState.bookCandidates.length === 0 ? (
+                <p className="gmodal__empty">No candidate books yet.</p>
+              ) : (
+                <div className="gmodal__vote-list">
+                  {groupState.bookCandidates.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`gmodal__vote-option ${myVote === c.id ? "gmodal__vote-option--voted" : ""}`}
+                      onClick={() => canVote && handleVote(c.id)}
+                      style={{ cursor: canVote ? "pointer" : "default" }}
+                    >
+                      <div className="gmodal__vote-cover" style={{ background: c.coverColor }}>
+                        {c.coverUrl && <img src={c.coverUrl} alt={c.title} />}
+                      </div>
+
+                      <div className="gmodal__vote-info">
+                        <p className="gmodal__vote-title">{c.title}</p>
+                        <p className="gmodal__vote-author">{c.author}</p>
+                      </div>
+
+                      <div className="gmodal__vote-count">
+                        <span className="gmodal__vote-number">{voteCount(c.id)}</span>
+                        <span className="gmodal__vote-label">vote{voteCount(c.id) !== 1 ? "s" : ""}</span>
+                      </div>
+
+                      {myVote === c.id && <span className="gmodal__voted-badge">Voted</span>}
                     </div>
-                    <div className="gmodal__vote-info">
-                      <p className="gmodal__vote-title">{c.title}</p>
-                      <p className="gmodal__vote-author">{c.author}</p>
-                    </div>
-                    <div className="gmodal__vote-count">
-                      <span className="gmodal__vote-number">{voteCount(c.id)}</span>
-                      <span className="gmodal__vote-label">vote{voteCount(c.id) !== 1 ? "s" : ""}</span>
-                    </div>
-                    {myVote === c.id && (
-                      <span className="gmodal__voted-badge">Voted</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
 
             {isOwner && groupState.voteSessionActive && (
-              <div style={{ marginTop: "0.5rem" }}>
-                <button className="gmodal__btn gmodal__btn--save" onClick={handleEndVote} disabled={saving}>
+              <div className="gmodal__block">
+                <p className="gmodal__section-label">Owner vote controls</p>
+                <button className="gmodal__btn gmodal__btn--save gmodal__btn--fit" onClick={handleEndVote} disabled={working}>
                   End vote now
                 </button>
               </div>
