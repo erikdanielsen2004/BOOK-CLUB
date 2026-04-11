@@ -20,30 +20,51 @@ const groupSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
     description: {
-      type: String
+      type: String,
+      default: '',
+      trim: true
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
-    members: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    }],
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      }
+    ],
     currentBook: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Book'
+      ref: 'Book',
+      default: null
     },
-    bookCandidates: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Book'
-    }],
-    votes: [voteSchema]
+    bookCandidates: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Book'
+      }
+    ],
+    votes: [voteSchema],
+
+    voteSessionActive: {
+      type: Boolean,
+      default: false
+    },
+    voteStartAt: {
+      type: Date,
+      default: null
+    },
+    voteEndAt: {
+      type: Date,
+      default: null
+    }
   },
   { timestamps: true }
 );
