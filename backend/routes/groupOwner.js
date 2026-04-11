@@ -66,28 +66,33 @@ router.post("/add-to-list/:userId/:groupId", async (req, res) => {
 });
 
 router.post("/:userId/:groupId/publish-list", async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        
         const { userId, groupId } = req.params;
 
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found." });
-        if (!user.isVerified) return res.status(401).json({ message: "Please verify your email." });
+        const user = await User.findById(userId).session(session);
+        if (!user) return abortAndEnd(session, res, 404, "User not found.");
+        if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
-        const group = await Group.findById(groupId).populate("bookCandidates");
-        if (!group) return res.status(404).json({ message: "Group not found." });
-        if (group.owner.toString() !== userId) return res.status(403).json({ message: "Access denied." });
+        const group = await Group.findById(groupId).populate("bookCandidates").session(session);
 
-        if (group.bookCandidates.length < 2) return res.status(400).json({ message: "Must have at least 2 books." });
-        
+        if (!group) return abortAndEnd(session, res, 404, "Group not found.");
+        if (group.owner.toString() !== userId) return abortAndEnd(session, res, 403, "Access denied.");
+
+        if (group.bookCandidates.length < 2) return abortAndEnd(session, res, 400, "Must have at least 2 books.");
+
         group.votes = [];
-        await group.save();
+        await group.save({ session });
 
+        await session.commitTransaction();
+        session.endSession();
         return res.status(200).json({ message: "List published successfully.", bookCandidates: group.bookCandidates });
 
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ message: "Server error." });
+        return abortAndEnd(session, res, 500, "Server error.");
     }
 });
 
