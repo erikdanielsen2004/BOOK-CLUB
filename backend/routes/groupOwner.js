@@ -27,7 +27,7 @@ function normalizeBookPayload(body) {
     };
 }
 
-router.post("/add/:userId/:groupId", async (req, res) => {
+router.post("/add-to-list/:userId/:groupId", async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -62,6 +62,32 @@ router.post("/add/:userId/:groupId", async (req, res) => {
     } catch (error) {
         console.error(error.message);
         return abortAndEnd(session, res, 500, "Server error.");
+    }
+});
+
+router.post("/:userId/:groupId/publish-list", async (req, res) => {
+    try {
+        
+        const { userId, groupId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+        if (!user.isVerified) return res.status(401).json({ message: "Please verify your email." });
+
+        const group = await Group.findById(groupId).populate("bookCandidates");
+        if (!group) return res.status(404).json({ message: "Group not found." });
+        if (group.owner.toString() !== userId) return res.status(403).json({ message: "Access denied." });
+
+        if (group.bookCandidates.length < 2) return res.status(400).json({ message: "Must have at least 2 books." });
+        
+        group.votes = [];
+        await group.save();
+
+        return res.status(200).json({ message: "List published successfully.", bookCandidates: group.bookCandidates });
+
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).json({ message: "Server error." });
     }
 });
 
