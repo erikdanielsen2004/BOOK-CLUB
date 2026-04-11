@@ -11,28 +11,78 @@ async function abortAndEnd(session, res, status, message) {
     return res.status(status).json({ message });
 }
 
+function mapGroup(group) {
+    return {
+        _id: group._id,
+        name: group.name,
+        description: group.description || '',
+        owner: group.owner?._id || group.owner,
+        members: Array.isArray(group.members)
+            ? group.members.map((member) => ({
+                _id: member._id,
+                firstName: member.firstName || '',
+                lastName: member.lastName || ''
+            }))
+            : [],
+        currentBook: group.currentBook
+            ? {
+                _id: group.currentBook._id,
+                title: group.currentBook.title || 'Untitled',
+                authors: Array.isArray(group.currentBook.authors) ? group.currentBook.authors : [],
+                thumbnail: group.currentBook.thumbnail || ''
+            }
+            : null,
+        bookCandidates: Array.isArray(group.bookCandidates)
+            ? group.bookCandidates.map((book) => ({
+                _id: book._id,
+                googleBooksId: book.googleBooksId || '',
+                title: book.title || 'Untitled',
+                authors: Array.isArray(book.authors) ? book.authors : [],
+                thumbnail: book.thumbnail || ''
+            }))
+            : [],
+        votes: Array.isArray(group.votes)
+            ? group.votes.map((vote) => ({
+                _id: vote._id,
+                user: vote.user?._id || vote.user,
+                book: vote.book?._id || vote.book
+            }))
+            : [],
+        voteSessionActive: !!group.voteSessionActive,
+        voteStartAt: group.voteStartAt,
+        voteEndAt: group.voteEndAt,
+        createdAt: group.createdAt,
+        updatedAt: group.updatedAt
+    };
+}
+
 router.get("/search", async (req, res) => {
     try {
-        
         const { searchBar } = req.query;
 
         let query = {};
         if (searchBar) {
             query = {
                 $or: [
-                    { name: { $regex: searchBar, $options: "i" } }, 
+                    { name: { $regex: searchBar, $options: "i" } },
                     { description: { $regex: searchBar, $options: "i" } }
-                ] 
+                ]
             };
         }
-        
-        const groups = await Group.aggregate([
-            { $match: query },
-            { $addFields: { memberCount: { $size: "$members" } } },
-            { $sort: { memberCount: -1 } }
-        ]);
 
-        return res.status(200).json({ message: "Search success." , groups});
+        const groups = await Group.find(query)
+            .populate("owner", "firstName lastName")
+            .populate("members", "firstName lastName")
+            .populate("currentBook", "title authors thumbnail")
+            .populate("bookCandidates", "googleBooksId title authors thumbnail")
+            .populate("votes.user", "firstName lastName")
+            .populate("votes.book", "title authors thumbnail")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "Search success.",
+            groups: groups.map(mapGroup)
+        });
 
     } catch (error) {
         console.error(error.message);
@@ -42,7 +92,6 @@ router.get("/search", async (req, res) => {
 
 router.get("/search/:userId", async (req, res) => {
     try {
-        
         const { searchBar } = req.query;
         const { userId } = req.params;
 
@@ -55,15 +104,21 @@ router.get("/search/:userId", async (req, res) => {
                 { name: { $regex: searchBar, $options: "i" } },
                 { description: { $regex: searchBar, $options: "i" } }
             ];
-        };
-        
-        const groups = await Group.aggregate([
-            { $match: query },
-            { $addFields: { memberCount: { $size: "$members" } } },
-            { $sort: { memberCount: -1 } }
-        ]);
+        }
 
-        return res.status(200).json({ message: "Search success." , groups});
+        const groups = await Group.find(query)
+            .populate("owner", "firstName lastName")
+            .populate("members", "firstName lastName")
+            .populate("currentBook", "title authors thumbnail")
+            .populate("bookCandidates", "googleBooksId title authors thumbnail")
+            .populate("votes.user", "firstName lastName")
+            .populate("votes.book", "title authors thumbnail")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "Search success.",
+            groups: groups.map(mapGroup)
+        });
 
     } catch (error) {
         console.error(error.message);
@@ -86,13 +141,17 @@ router.post("/create/:userId", async (req, res) => {
         if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
 
         const group = new Group({
-            name,
-            description,
+            name: name.trim(),
+            description: description?.trim() || "",
             owner: userId,
             members: [userId],
             bookCandidates: [],
-            votes: []
+            votes: [],
+            voteSessionActive: false,
+            voteStartAt: null,
+            voteEndAt: null
         });
+
         await group.save({ session });
 
         user.createdGroups.push(group._id);
@@ -101,7 +160,19 @@ router.post("/create/:userId", async (req, res) => {
 
         await session.commitTransaction();
         session.endSession();
-        return res.status(201).json({ message: "Group created successfully.", group });
+
+        const populatedGroup = await Group.findById(group._id)
+            .populate("owner", "firstName lastName")
+            .populate("members", "firstName lastName")
+            .populate("currentBook", "title authors thumbnail")
+            .populate("bookCandidates", "googleBooksId title authors thumbnail")
+            .populate("votes.user", "firstName lastName")
+            .populate("votes.book", "title authors thumbnail");
+
+        return res.status(201).json({
+            message: "Group created successfully.",
+            group: mapGroup(populatedGroup)
+        });
 
     } catch (error) {
         console.error(error.message);
@@ -119,7 +190,7 @@ router.delete("/delete/:userId/:groupId", async (req, res) => {
         const user = await User.findById(userId).session(session);
         if (!user) return abortAndEnd(session, res, 404, "User not found.");
         if (!user.isVerified) return abortAndEnd(session, res, 401, "Please verify your email.");
-        
+
         const group = await Group.findById(groupId).session(session);
         if (!group) return abortAndEnd(session, res, 404, "Group not found.");
         if (group.owner.toString() !== userId) return abortAndEnd(session, res, 403, "Access denied.");
@@ -156,7 +227,7 @@ router.post("/join/:userId/:groupId", async (req, res) => {
 
         const isMember = group.members.some(member => member.toString() === userId);
         if (isMember) return abortAndEnd(session, res, 409, "User is already in this group.");
-        
+
         group.members = [...new Set([...group.members, user._id])];
         user.joinedGroups = [...new Set([...user.joinedGroups, group._id])];
 
@@ -213,11 +284,14 @@ router.post("/leave/:userId/:groupId", async (req, res) => {
         user.joinedGroups = user.joinedGroups.filter(group => group.toString() !== groupId);
         user.createdGroups = user.createdGroups.filter(group => group.toString() !== groupId);
 
+        group.votes = group.votes.filter(vote => vote.user.toString() !== userId);
+
         await group.save({ session });
         await user.save({ session });
 
         await session.commitTransaction();
         session.endSession();
+
         const response = { message: "Group left successfully." };
         if (ownerTransfer) response.newOwner = group.owner;
         return res.status(200).json(response);
