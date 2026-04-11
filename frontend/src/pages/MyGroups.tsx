@@ -142,7 +142,7 @@ const GroupCard: React.FC<{ group: GroupModalData; onClick: () => void }> = ({ g
 
 const MyGroups: React.FC = () => {
   const user = getStoredUser();
-  const currentUserId = user?._id || "";
+  const currentUserId = user?._id || user?.id || "";
 
   const [groups, setGroups] = useState<GroupModalData[]>([]);
   const [search, setSearch] = useState("");
