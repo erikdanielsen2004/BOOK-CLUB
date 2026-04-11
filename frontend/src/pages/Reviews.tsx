@@ -50,6 +50,7 @@ type HasReadBook = {
   _id: string;
   title: string;
   authors?: string[];
+  thumbnail?: string;
 };
 
 const getStoredUser = (): UserData | null => {
@@ -191,26 +192,24 @@ const Reviews: React.FC = () => {
     }
   };
 
-  const loadHasReadBooks = async (query = "") => {
-    if (!userId) return;
+const loadHasReadBooks = async () => {
+  if (!userId) return;
 
-    try {
-      const res = await fetch(
-        `/api/book-reviews/user-hasread/${userId}?q=${encodeURIComponent(query)}`
-      );
-      const data = await res.json();
+  try {
+    const res = await fetch(`/api/user-books/${userId}`);
+    const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data.message || "Could not load your Has Read books.");
-        return;
-      }
-
-      setHasReadBooks(data.books || []);
-      setWritePage(1);
-    } catch {
-      setMessage("Could not load your Has Read books.");
+    if (!res.ok) {
+      setMessage(data.message || "Could not load your Has Read books.");
+      return;
     }
-  };
+
+    setHasReadBooks(data.hasRead || []);
+    setWritePage(1);
+  } catch {
+    setMessage("Could not load your Has Read books.");
+  }
+};
 
   const submitReview = async () => {
     if (!userId || !selectedHasReadBook) return;
@@ -246,7 +245,7 @@ const Reviews: React.FC = () => {
       setRating(0);
       setWriteSearch("");
 
-      await loadHasReadBooks("");
+      await loadHasReadBooks();
       if (selectedBook && selectedBook._id === selectedHasReadBook._id) {
         fetchBookReviews(selectedBook._id, sort, 1);
       }
@@ -281,9 +280,9 @@ const Reviews: React.FC = () => {
   };
 
   useEffect(() => {
-    searchReviewedBooks("");
-    loadHasReadBooks("");
-  }, []);
+  searchReviewedBooks("");
+  loadHasReadBooks();
+}, []);
 
   useEffect(() => {
     if (selectedBook) {
@@ -382,8 +381,8 @@ const Reviews: React.FC = () => {
                 setWritePage(1);
               }}
             />
-            <button className="reviews-btn reviews-btn--secondary" type="button" onClick={() => loadHasReadBooks(writeSearch)}>
-              Search
+            <button className="reviews-btn reviews-btn--secondary" type="button" onClick={() => setWritePage(1)}>
+                Search
             </button>
           </div>
 
