@@ -188,20 +188,35 @@
 }
 
 /* ── Stars ── */
-.star-rating { display: flex; gap: 0.25rem; }
+.star-rating {
+  display: flex;
+  gap: 0.25rem;
+}
 
 .star {
   background: transparent;
   border: none;
-  font-size: 1.75rem;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.2);
-  transition: color 0.15s, transform 0.15s;
   line-height: 1;
   padding: 0;
+  color: rgba(0, 0, 0, 0.2);
+  transition: color 0.15s, transform 0.15s;
 }
-.star--filled { color: #e6a817; }
-.star:hover   { transform: scale(1.15); }
+
+.star__glyph {
+  display: block;
+  font-size: 1.75rem;
+  line-height: 1;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", "Noto Sans Symbols", sans-serif;
+}
+
+.star--filled {
+  color: #e6a817;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
 
 /* ── Textarea ── */
 .modal__textarea {
