@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/BookModal.css";
 
-// Types
 export type ShelfStatus = "has_read" | "currently_reading" | "want_to_read";
 
 export interface BookModalData {
@@ -13,7 +12,7 @@ export interface BookModalData {
   status: ShelfStatus;
   review?: string;
   rating?: number;
-  totalPages?: number; //
+  totalPages?: number;
 }
 
 interface BookModalProps {
@@ -22,50 +21,55 @@ interface BookModalProps {
   onSave: (updated: BookModalData) => void;
 }
 
-//Star Rating
 const StarRating: React.FC<{
   rating: number;
   onChange: (r: number) => void;
 }> = ({ rating, onChange }) => {
   const [hovered, setHovered] = useState(0);
+  const displayValue = hovered || rating;
+
   return (
     <div className="star-rating">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          className={`star ${star <= (hovered || rating) ? "star--filled" : ""}`}
-          onMouseEnter={() => setHovered(star)}
-          onMouseLeave={() => setHovered(0)}
-          onClick={() => onChange(star)}
-          aria-label={`Rate ${star} out of 5`}
-        >★</button>
-      ))}
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= displayValue;
+
+        return (
+          <button
+            key={star}
+            type="button"
+            className={`star ${filled ? "star--filled" : ""}`}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            onClick={() => onChange(star)}
+            aria-label={`Rate ${star} out of 5`}
+          >
+            <span className="star__glyph">★</span>
+          </button>
+        );
+      })}
     </div>
   );
 };
 
-// Book Modal
 const BookModal: React.FC<BookModalProps> = ({ book, onClose, onSave }) => {
-  const [status,      setStatus]      = useState<ShelfStatus>(book.status);
-  const [review,      setReview]      = useState(book.review      ?? "");
-  const [rating,      setRating]      = useState(book.rating      ?? 0);
+  const [status, setStatus] = useState<ShelfStatus>(book.status);
+  const [review, setReview] = useState(book.review ?? "");
+  const [rating, setRating] = useState(book.rating ?? 0);
+
+  useEffect(() => {
+    setStatus(book.status);
+    setReview(book.review ?? "");
+    setRating(book.rating ?? 0);
+  }, [book]);
+
   const statusOptions: { value: ShelfStatus; label: string }[] = [
-    { value: "has_read",          label: "Has Read" },
+    { value: "has_read", label: "Has Read" },
     { value: "currently_reading", label: "Currently Reading" },
-    { value: "want_to_read",      label: "Want to Read" },
+    { value: "want_to_read", label: "Want to Read" },
   ];
 
   const handleSave = () => {
-
-    //API
-
-
-
-
-
-
-    onSave({ ...book, status, review, rating});
+    onSave({ ...book, status, review, rating });
     onClose();
   };
 
@@ -78,7 +82,6 @@ const BookModal: React.FC<BookModalProps> = ({ book, onClose, onSave }) => {
       <div className="modal" role="dialog" aria-modal="true">
         <button className="modal__close" onClick={onClose} aria-label="Close">✕</button>
 
-        {/* Book header */}
         <div className="modal__header">
           <div className="modal__cover" style={{ background: book.coverColor }}>
             {book.coverUrl && <img src={book.coverUrl} alt={book.title} />}
@@ -89,7 +92,6 @@ const BookModal: React.FC<BookModalProps> = ({ book, onClose, onSave }) => {
           </div>
         </div>
 
-        {/* Status */}
         <div className="modal__section">
           <label className="modal__label">Reading Status</label>
           <div className="modal__status-options">
@@ -99,18 +101,18 @@ const BookModal: React.FC<BookModalProps> = ({ book, onClose, onSave }) => {
                 type="button"
                 className={`status-btn ${status === opt.value ? "status-btn--active" : ""}`}
                 onClick={() => setStatus(opt.value)}
-              >{opt.label}</button>
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Rating */}
         <div className="modal__section">
           <label className="modal__label">Your Rating</label>
           <StarRating rating={rating} onChange={setRating} />
         </div>
 
-        {/* Review */}
         <div className="modal__section">
           <label className="modal__label" htmlFor="review">Your Review</label>
           <textarea
@@ -123,10 +125,9 @@ const BookModal: React.FC<BookModalProps> = ({ book, onClose, onSave }) => {
           />
         </div>
 
-        {/* Actions */}
         <div className="modal__actions">
           <button className="modal__btn modal__btn--cancel" onClick={onClose}>Cancel</button>
-          <button className="modal__btn modal__btn--save"   onClick={handleSave}>Save</button>
+          <button className="modal__btn modal__btn--save" onClick={handleSave}>Save</button>
         </div>
       </div>
     </div>
