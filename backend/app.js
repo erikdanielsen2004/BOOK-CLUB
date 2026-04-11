@@ -5,6 +5,8 @@ const app = express();
 
 const authRouter = require('./routes/auth.js');
 const groupMainRouter = require('./routes/groupMain.js');
+const groupOwnerRouter = require('./routes/groupOwner.js');
+// const groupVotingRouter = require('./routes/groupVoting.js');
 const passwordResetRouter = require('./routes/passwordReset.js');
 const searchRouter = require('./routes/search.js');
 const reviewsRouter = require('./routes/bookReviews.js');
@@ -20,6 +22,8 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/auth', authRouter);
 app.use('/api/group-main', groupMainRouter);
+app.use('/api/group-owner', groupOwnerRouter);
+// app.use('/api/group-voting', groupVotingRouter);
 app.use('/api/reset', passwordResetRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/book-reviews', reviewsRouter);
