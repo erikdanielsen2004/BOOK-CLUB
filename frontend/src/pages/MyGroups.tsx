@@ -4,13 +4,12 @@ import GroupModal, { type GroupModalData } from "../components/GroupModal.tsx";
 import "../styles/MyGroups.css";
 
 type StoredUser = {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  _id?: string;
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 };
-
-const fallbackCover = "#c4b9ae";
 
 function getStoredUser(): StoredUser | null {
   try {
