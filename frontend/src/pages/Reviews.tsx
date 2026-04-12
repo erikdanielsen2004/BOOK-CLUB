@@ -145,7 +145,6 @@ const Reviews: React.FC = () => {
   const [selectedHasReadBook, setSelectedHasReadBook] = useState<HasReadBook | null>(null);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
-
   const [writePage, setWritePage] = useState(1);
 
   const [message, setMessage] = useState("");
@@ -154,6 +153,19 @@ const Reviews: React.FC = () => {
   const showToast = (text: string) => {
     setToast(text);
     setTimeout(() => setToast(""), 2500);
+  };
+
+  const closeViewPanel = () => {
+    setSelectedBook(null);
+    setViewData(null);
+    setPage(1);
+    setSort("newest");
+  };
+
+  const closeWritePanel = () => {
+    setSelectedHasReadBook(null);
+    setRating(0);
+    setReviewText("");
   };
 
   const searchReviewedBooks = async (query = "") => {
@@ -192,24 +204,24 @@ const Reviews: React.FC = () => {
     }
   };
 
-const loadHasReadBooks = async () => {
-  if (!userId) return;
+  const loadHasReadBooks = async () => {
+    if (!userId) return;
 
-  try {
-    const res = await fetch(`/api/user-books/${userId}`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`/api/user-books/${userId}`);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setMessage(data.message || "Could not load your Has Read books.");
-      return;
+      if (!res.ok) {
+        setMessage(data.message || "Could not load your Has Read books.");
+        return;
+      }
+
+      setHasReadBooks(data.hasRead || []);
+      setWritePage(1);
+    } catch {
+      setMessage("Could not load your Has Read books.");
     }
-
-    setHasReadBooks(data.hasRead || []);
-    setWritePage(1);
-  } catch {
-    setMessage("Could not load your Has Read books.");
-  }
-};
+  };
 
   const submitReview = async () => {
     if (!userId || !selectedHasReadBook) return;
@@ -240,13 +252,15 @@ const loadHasReadBooks = async () => {
       }
 
       showToast("Review created successfully.");
-      setSelectedHasReadBook(null);
-      setReviewText("");
-      setRating(0);
+
+      const createdBookId = selectedHasReadBook._id;
+
+      closeWritePanel();
       setWriteSearch("");
 
       await loadHasReadBooks();
-      if (selectedBook && selectedBook._id === selectedHasReadBook._id) {
+
+      if (selectedBook && selectedBook._id === createdBookId) {
         fetchBookReviews(selectedBook._id, sort, 1);
       }
 
@@ -280,9 +294,9 @@ const loadHasReadBooks = async () => {
   };
 
   useEffect(() => {
-  searchReviewedBooks("");
-  loadHasReadBooks();
-}, []);
+    searchReviewedBooks("");
+    loadHasReadBooks();
+  }, []);
 
   useEffect(() => {
     if (selectedBook) {
@@ -344,8 +358,9 @@ const loadHasReadBooks = async () => {
             {reviewedBooks.map((book) => (
               <div
                 key={book._id}
-                className="reviews-book-chip"
+                className={`reviews-book-chip ${selectedBook?._id === book._id ? "reviews-book-chip--selected" : ""}`}
                 onClick={() => {
+                  closeWritePanel();
                   setSelectedBook(book);
                   setPage(1);
                   setSort("newest");
@@ -382,7 +397,7 @@ const loadHasReadBooks = async () => {
               }}
             />
             <button className="reviews-btn reviews-btn--secondary" type="button" onClick={() => setWritePage(1)}>
-                Search
+              Search
             </button>
           </div>
 
@@ -393,7 +408,12 @@ const loadHasReadBooks = async () => {
                   <div
                     key={book._id}
                     className={`reviews-book-chip ${selectedHasReadBook?._id === book._id ? "reviews-book-chip--selected" : ""}`}
-                    onClick={() => setSelectedHasReadBook(book)}
+                    onClick={() => {
+                      closeViewPanel();
+                      setSelectedHasReadBook(book);
+                      setRating(0);
+                      setReviewText("");
+                    }}
                   >
                     <div className="reviews-book-chip__title">{book.title}</div>
                     <div className="reviews-book-chip__meta">
@@ -433,9 +453,21 @@ const loadHasReadBooks = async () => {
 
           {selectedHasReadBook && (
             <div className="reviews-create-card">
-              <div className="reviews-create-card__book">{selectedHasReadBook.title}</div>
-              <div className="reviews-create-card__author">
-                {selectedHasReadBook.authors?.join(", ") || "Unknown"}
+              <div className="reviews-panel-header">
+                <div>
+                  <div className="reviews-create-card__book">{selectedHasReadBook.title}</div>
+                  <div className="reviews-create-card__author">
+                    {selectedHasReadBook.authors?.join(", ") || "Unknown"}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="reviews-close-btn"
+                  onClick={closeWritePanel}
+                >
+                  Dismiss writing review
+                </button>
               </div>
 
               <HalfStarInput value={rating} onChange={setRating} />
@@ -459,23 +491,35 @@ const loadHasReadBooks = async () => {
         {viewData && (
           <section className="reviews-section">
             <div className="reviews-book-card">
-              <div className="reviews-book-card__cover">
-                {viewData.book.thumbnail ? (
-                  <img src={viewData.book.thumbnail} alt={viewData.book.title} />
-                ) : null}
-              </div>
+              <div className="reviews-panel-header reviews-panel-header--top">
+                <div className="reviews-book-card__inner">
+                  <div className="reviews-book-card__cover">
+                    {viewData.book.thumbnail ? (
+                      <img src={viewData.book.thumbnail} alt={viewData.book.title} />
+                    ) : null}
+                  </div>
 
-              <div>
-                <h3 className="reviews-book-card__title">{viewData.book.title}</h3>
-                <div className="reviews-book-card__author">
-                  {viewData.book.authors?.join(", ") || "Unknown"}
+                  <div>
+                    <h3 className="reviews-book-card__title">{viewData.book.title}</h3>
+                    <div className="reviews-book-card__author">
+                      {viewData.book.authors?.join(", ") || "Unknown"}
+                    </div>
+                    <div className="reviews-book-card__avg">
+                      {viewData.averageRating.toFixed(2)}
+                      <StarDisplay rating={viewData.averageRating} size="md" />
+                      {" · "}
+                      {viewData.reviewCount} review{viewData.reviewCount !== 1 ? "s" : ""}
+                    </div>
+                  </div>
                 </div>
-                <div className="reviews-book-card__avg">
-                  {viewData.averageRating.toFixed(2)}
-                  <StarDisplay rating={viewData.averageRating} size="md" />
-                  {" · "}
-                  {viewData.reviewCount} review{viewData.reviewCount !== 1 ? "s" : ""}
-                </div>
+
+                <button
+                  type="button"
+                  className="reviews-close-btn"
+                  onClick={closeViewPanel}
+                >
+                  Dismiss viewing
+                </button>
               </div>
             </div>
 
