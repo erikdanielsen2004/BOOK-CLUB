@@ -104,12 +104,14 @@
   flex-direction: column;
   gap: 1.5rem;
   position: relative;
+  align-items: stretch;
 }
 
-.dashboard-avatar-wrap {
+.dashboard-user-menu {
   position: absolute;
-  top: 1.5rem;
+  top: 1.25rem;
   right: 1.5rem;
+  z-index: 20;
 }
 
 .dashboard-avatar {
@@ -127,10 +129,14 @@
   border: none;
 }
 
+.dashboard-avatar--button {
+  margin-left: auto;
+}
+
 .dashboard-avatar-menu {
   position: absolute;
-  top: 48px;
-  right: 0;
+  top: 0;
+  right: calc(100% + 0.75rem);
   min-width: 140px;
   background: white;
   border-radius: 12px;
@@ -138,7 +144,7 @@
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  z-index: 20;
+  z-index: 25;
 }
 
 .dashboard-avatar-menu button {
@@ -162,7 +168,7 @@
   padding: 1.5rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin-top: 2.5rem;
+  margin-top: 4.5rem;
 }
 
 .stat-card__label {
