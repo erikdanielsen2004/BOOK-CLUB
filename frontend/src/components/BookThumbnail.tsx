@@ -11,6 +11,8 @@ function BookThumbnail({ isLoginPage = false }: { isLoginPage?: boolean }) {
   const [books, setBooks] = useState<OpenLibraryBook[]>([]);
 
   useEffect(() => {
+    if (isLoginPage) return;
+
     const fetchBooks = async () => {
       try {
         const page = Math.floor(Math.random() * 10) + 1;
@@ -33,45 +35,42 @@ function BookThumbnail({ isLoginPage = false }: { isLoginPage?: boolean }) {
     };
 
     fetchBooks();
-  }, []);
-
+  }, [isLoginPage]);
 
   if (!isLoginPage) {
     return (
       <div className={styles.bookGrid}>
-        {books.map((book, index) => (
-          <img
-            key={book.key}
-            src={`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`}
-            alt={book.title}
-            className={`${styles.bookCover} ${styles[`book${index + 1}`]}`}
-          />
-        ))}
+        {books.length > 0 ? (
+          books.map((book, index) => (
+            <img
+              key={book.key}
+              src={`https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`}
+              alt={book.title}
+              className={`${styles.bookCover} ${styles[`book${index + 1}`]}`}
+              loading="lazy"
+              decoding="async"
+            />
+          ))
+        ) : (
+          <>
+            <div className={`${styles.bookCover} ${styles.book1}`} />
+            <div className={`${styles.bookCover} ${styles.book2}`} />
+            <div className={`${styles.bookCover} ${styles.book3}`} />
+          </>
+        )}
       </div>
     );
   }
 
- 
-  const displayBook = books[0];
-  const coverUrl = displayBook
-    ? `https://covers.openlibrary.org/b/id/${displayBook.cover_i}-L.jpg`
-    : '/image.png';
-
   return (
     <div className={styles.loginSplitGrid}>
-      {displayBook && (
-        <>
-          {/* Left Symmetrical Book */}
-          <div className={`${styles.bookWrapper} ${styles.leftCutoff}`}>
-            <img src={coverUrl} alt="decorative book" className={styles.loginBookCover} />
-          </div>
+      <div className={`${styles.bookWrapper} ${styles.leftCutoff}`}>
+        <img src="/logo.png" alt="decorative book" className={styles.loginBookCover} loading="eager" decoding="async" />
+      </div>
 
-          {/* Right Symmetrical Book */}
-          <div className={`${styles.bookWrapper} ${styles.rightCutoff}`}>
-            <img src={coverUrl} alt="decorative book" className={styles.loginBookCover} />
-          </div>
-        </>
-      )}
+      <div className={`${styles.bookWrapper} ${styles.rightCutoff}`}>
+        <img src="/logo.png" alt="decorative book" className={styles.loginBookCover} loading="eager" decoding="async" />
+      </div>
     </div>
   );
 }
