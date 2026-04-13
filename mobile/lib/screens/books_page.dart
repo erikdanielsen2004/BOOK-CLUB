@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/user.dart';
 import '../models/book.dart';
+import '../models/user.dart';
 import '../services/user_books_service.dart';
 import '../theme/app_theme.dart';
 import 'landing_page.dart';
@@ -18,18 +18,46 @@ class _BooksPageState extends State<BooksPage> {
   final _booksService = UserBooksService();
 
   final _searchController = TextEditingController();
-  final _addBookController = TextEditingController();
 
-  bool _isLoading = true;
+  bool _isLoadingShelf = true;
+  bool _isSearching = false;
   String _error = '';
-  String _searchMessage = '';
-  String _addMessage = '';
+  String _message = '';
+  bool _messageIsError = false;
+
+  String _selectedCategory = '';
+  int _page = 0;
+  final int _maxResults = 12;
 
   List<BookModel> hasRead = [];
   List<BookModel> reading = [];
   List<BookModel> wantsToRead = [];
-  List<BookModel> allBooks = [];
-  List<BookModel> filteredBooks = [];
+  List<BookModel> searchResults = [];
+
+  final List<String> _categories = const [
+    '',
+    'Fiction',
+    'Fantasy',
+    'Romance',
+    'Mystery',
+    'Thriller',
+    'Science Fiction',
+    'Horror',
+    'Biography',
+    'History',
+    'Business',
+    'Young Adult',
+    'Self-Help',
+    'Comics',
+    'Poetry',
+    'Religion',
+    'Travel',
+    'Cooking',
+    'Art',
+    'Computers',
+  ];
+
+  final Map<String, bool> _expanded = {};
 
   @override
   void initState() {
@@ -41,58 +69,87 @@ class _BooksPageState extends State<BooksPage> {
     try {
       final data = await _booksService.getUserBooks(widget.user.id);
 
-      final all = <BookModel>[
-        ...data['hasRead'] ?? [],
-        ...data['reading'] ?? [],
-        ...data['wantsToRead'] ?? [],
-      ];
-
       setState(() {
         hasRead = data['hasRead'] ?? [];
         reading = data['reading'] ?? [];
         wantsToRead = data['wantsToRead'] ?? [];
-        allBooks = all;
-        filteredBooks = [];
-        _isLoading = false;
+        _isLoadingShelf = false;
       });
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
-        _isLoading = false;
+        _isLoadingShelf = false;
       });
     }
   }
 
-  void _searchBook() {
-    final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) {
+  Future<void> _runSearch([int nextPage = 0]) async {
+    setState(() {
+      _message = '';
+      _messageIsError = false;
+      searchResults = [];
+    });
+
+    if (_searchController.text.trim().isEmpty && _selectedCategory.trim().isEmpty) {
       setState(() {
-        filteredBooks = [];
-        _searchMessage = '';
+        _message = 'Enter a search term or choose a category.';
+        _messageIsError = true;
       });
       return;
     }
 
-    final results = allBooks.where((book) {
-      return book.title.toLowerCase().contains(query) ||
-          book.authors.join(', ').toLowerCase().contains(query);
-    }).toList();
-
     setState(() {
-      filteredBooks = results;
-      _searchMessage = results.isEmpty
-          ? 'No books found'
-          : 'Book(s) have been retrieved';
+      _isSearching = true;
     });
+
+    try {
+      final results = await _booksService.searchBooks(
+        query: _searchController.text.trim(),
+        category: _selectedCategory.trim(),
+        startIndex: nextPage * _maxResults,
+        maxResults: _maxResults,
+      );
+
+      setState(() {
+        searchResults = results;
+        _page = nextPage;
+        if (results.isEmpty) {
+          _message = 'No books found.';
+          _messageIsError = true;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _message = e.toString().replaceFirst('Exception: ', '');
+        _messageIsError = true;
+      });
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
   }
 
-  void _addBook() {
-    final text = _addBookController.text.trim();
-    if (text.isEmpty) return;
+  Future<void> _addToList(BookModel book, String list) async {
+    try {
+      final resultMessage = await _booksService.addBookToList(
+        userId: widget.user.id,
+        list: list,
+        book: book,
+      );
 
-    setState(() {
-      _addMessage = 'Book ready to add';
-    });
+      await _loadBooks();
+
+      setState(() {
+        _message = resultMessage;
+        _messageIsError = false;
+      });
+    } catch (e) {
+      setState(() {
+        _message = e.toString().replaceFirst('Exception: ', '');
+        _messageIsError = true;
+      });
+    }
   }
 
   Widget _userHeader() {
@@ -128,59 +185,209 @@ class _BooksPageState extends State<BooksPage> {
     );
   }
 
-  Widget _bookUISection() {
+  Widget _notice() {
+    if (_message.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _messageIsError
+            ? const Color.fromRGBO(139, 35, 35, 0.1)
+            : Colors.green.withOpacity(0.1),
+        border: Border.all(
+          color: _messageIsError
+              ? const Color.fromRGBO(139, 35, 35, 0.3)
+              : Colors.green.withOpacity(0.3),
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        _message,
+        style: TextStyle(
+          color: _messageIsError ? AppTheme.background : Colors.green.shade700,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _searchSection() {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 6),
+            const Text(
+              'Books',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.dark,
+              ),
+            ),
+            const SizedBox(height: 14),
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Book To Search For',
+                hintText: 'Search by title, author, or keyword...',
               ),
+              onSubmitted: (_) => _runSearch(0),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedCategory,
+              items: _categories
+                  .map(
+                    (cat) => DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat.isEmpty ? 'All categories' : cat),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCategory = value ?? '';
+                });
+              },
+              decoration: const InputDecoration(),
+            ),
+            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: _searchBook,
-              child: const Text('Search Book'),
+              onPressed: _isSearching ? null : () => _runSearch(0),
+              child: Text(_isSearching ? 'Searching...' : 'Search'),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _searchMessage,
-              style: const TextStyle(color: AppTheme.dark),
-            ),
-            if (filteredBooks.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              ...filteredBooks.map(
-                (book) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(book.title),
-                  subtitle: Text(book.authors.join(', ')),
-                ),
+            _notice(),
+            if (searchResults.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              ...searchResults.map(_bookCard),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: _page == 0 ? null : () => _runSearch(_page - 1),
+                    child: const Text('Previous'),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Page ${_page + 1}',
+                    style: const TextStyle(
+                      color: AppTheme.dark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: searchResults.length < _maxResults
+                        ? null
+                        : () => _runSearch(_page + 1),
+                    child: const Text('Next'),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 18),
-            TextField(
-              controller: _addBookController,
-              decoration: const InputDecoration(
-                hintText: 'Book To Add',
-              ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _addBook,
-              child: const Text('Add Book'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _addMessage,
-              style: const TextStyle(color: AppTheme.dark),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _bookCard(BookModel book) {
+    final expanded = _expanded[book.googleBooksId] ?? false;
+    final hasLongDesc = book.description.length > 180;
+    final description = expanded || !hasLongDesc
+        ? book.description
+        : '${book.description.substring(0, 180)}...';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (book.thumbnail.isNotEmpty)
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  book.thumbnail,
+                  height: 150,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          if (book.thumbnail.isNotEmpty) const SizedBox(height: 12),
+          Text(
+            book.title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.dark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Author(s): ${book.authors.isNotEmpty ? book.authors.join(', ') : 'Unknown'}',
+            style: const TextStyle(color: AppTheme.dark),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Category: ${book.categories.isNotEmpty ? book.categories.join(', ') : 'None'}',
+            style: const TextStyle(color: AppTheme.dark),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Published: ${book.publishedDate.isNotEmpty ? book.publishedDate : 'Unknown'}',
+            style: const TextStyle(color: AppTheme.dark),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Pages: ${book.pageCount == 0 ? 'N/A' : book.pageCount}',
+            style: const TextStyle(color: AppTheme.dark),
+          ),
+          if (book.description.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              description,
+              style: const TextStyle(color: AppTheme.dark),
+            ),
+            if (hasLongDesc)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _expanded[book.googleBooksId] = !expanded;
+                  });
+                },
+                child: Text(expanded ? 'Read less' : 'Read more'),
+              ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton(
+                onPressed: () => _addToList(book, 'reading'),
+                child: const Text('Reading'),
+              ),
+              ElevatedButton(
+                onPressed: () => _addToList(book, 'hasRead'),
+                child: const Text('Has Read'),
+              ),
+              ElevatedButton(
+                onPressed: () => _addToList(book, 'wantsToRead'),
+                child: const Text('Want to Read'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -202,6 +409,12 @@ class _BooksPageState extends State<BooksPage> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -211,7 +424,7 @@ class _BooksPageState extends State<BooksPage> {
         title: const Text('Welcome to the Book Club'),
         centerTitle: true,
       ),
-      body: _isLoading
+      body: _isLoadingShelf
           ? const Center(child: CircularProgressIndicator())
           : _error.isNotEmpty
               ? Center(
@@ -225,7 +438,7 @@ class _BooksPageState extends State<BooksPage> {
                   child: Column(
                     children: [
                       _userHeader(),
-                      _bookUISection(),
+                      _searchSection(),
                       const SizedBox(height: 14),
                       _shelf('Has Read', hasRead),
                       _shelf('Reading', reading),

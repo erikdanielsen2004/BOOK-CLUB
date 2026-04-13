@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import 'books_page.dart';
+import 'dashboard_page.dart';
+import 'forgot_password_page.dart';
 import 'landing_page.dart';
 import 'register_page.dart';
 
@@ -18,7 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
-  //bool _remember = false;
   bool _loading = false;
   String? _error;
 
@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => BooksPage(user: user)),
+        MaterialPageRoute(builder: (_) => DashboardPage(user: user)),
       );
     } catch (e) {
       setState(() {
@@ -57,8 +57,6 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
-
 
   Widget _formCard() {
     return Card(
@@ -98,7 +96,12 @@ class _LoginPageState extends State<LoginPage> {
             ],
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Email', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              child: Text(
+                'Email',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
             ),
             const SizedBox(height: 6),
             TextField(
@@ -110,7 +113,12 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 14),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Password', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              child: Text(
+                'Password',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
             ),
             const SizedBox(height: 6),
             TextField(
@@ -120,14 +128,27 @@ class _LoginPageState extends State<LoginPage> {
                 hintText: 'Type in your password...',
               ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                
-                
-              ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                  );
+                },
+                child: const Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                    color: AppTheme.background,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             ElevatedButton(
               onPressed: _loading ? null : _submit,
               child: Text(_loading ? 'Logging in...' : 'Continue'),
@@ -188,7 +209,6 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Column(
           children: [
-            
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -200,7 +220,6 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         children: [
                           const SizedBox(height: 30),
-                          
                           const SizedBox(height: 30),
                           _formCard(),
                         ],
