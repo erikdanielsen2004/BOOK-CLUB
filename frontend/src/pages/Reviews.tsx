@@ -655,4 +655,8 @@ const Reviews: React.FC = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Reviews;
+=======
+export default Reviews;
+>>>>>>> dd76ad08838745eaf19e0ac3b19fd2346e8e9a6e
