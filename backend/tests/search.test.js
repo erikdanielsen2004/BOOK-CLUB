@@ -1,7 +1,9 @@
 /**
+ * search.test.js
  * Tests for GET /api/search/books
  *
  * node-fetch is mocked so tests never hit the real Google Books API.
+ * No database connection is needed — the search route does not touch MongoDB.
  */
 
 jest.mock('node-fetch');
@@ -9,16 +11,12 @@ jest.mock('node-fetch');
 const request = require('supertest');
 const fetch = require('node-fetch');
 const app = require('./helpers/testApp');
-const db = require('./helpers/db');
 
-beforeAll(db.connect);
-afterEach(() => {
-  db.clearCollections();
-  jest.clearAllMocks();
-});
-afterAll(db.disconnect);
+// No db.connect/disconnect here — search has no DB dependency.
+// jest.clearAllMocks() between tests keeps fetch mock calls isolated.
+afterEach(() => jest.clearAllMocks());
 
-// Helper - build a fake Google Books API item
+/** Helper: build a fake Google Books API item */
 function makeFakeItem(id, title, authors = ['Author A'], categories = ['Fiction']) {
   return {
     id,
@@ -36,7 +34,7 @@ function makeFakeItem(id, title, authors = ['Author A'], categories = ['Fiction'
   };
 }
 
-// Helper - configure fetch mock to return a successful Google Books response
+/** Helper: configure fetch mock to return a successful Google Books response */
 function mockFetchSuccess(items = [], totalItems = items.length) {
   fetch.mockResolvedValue({
     ok: true,
@@ -45,7 +43,7 @@ function mockFetchSuccess(items = [], totalItems = items.length) {
   });
 }
 
-// Helper - configure fetch mock to return a Google API error
+/** Helper: configure fetch mock to return a Google API error */
 function mockFetchError(status = 400, message = 'Bad Request') {
   fetch.mockResolvedValue({
     ok: false,
@@ -54,6 +52,7 @@ function mockFetchError(status = 400, message = 'Bad Request') {
   });
 }
 
+// ---------------------------------------------------------------------------
 describe('GET /api/search/books', () => {
   it('returns 400 when neither q nor category is provided', async () => {
     const res = await request(app).get('/api/search/books');
@@ -86,16 +85,16 @@ describe('GET /api/search/books', () => {
     expect(res.body.totalItems).toBe(0);
   });
 
-  // it('supports filtering by category alone', async () => {
-  //   mockFetchSuccess([makeFakeItem('g1', 'A Sci-Fi Book', ['Author'], ['Science Fiction'])], 1);
+  it('supports filtering by category alone', async () => {
+    mockFetchSuccess([makeFakeItem('g1', 'A Sci-Fi Book', ['Author'], ['Science Fiction'])], 1);
 
-  //   const res = await request(app).get('/api/search/books').query({ category: 'Science Fiction' });
+    const res = await request(app).get('/api/search/books').query({ category: 'Science Fiction' });
 
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.books[0].categories).toContain('Science Fiction');
-  //   // The URL sent to Google should include a subject: filter
-  //   expect(fetch).toHaveBeenCalledWith(expect.stringContaining('subject%3AScience+Fiction'));
-  // });
+    expect(res.status).toBe(200);
+    expect(res.body.books[0].categories).toContain('Science Fiction');
+    // The URL sent to Google should include a subject: filter
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('subject%3AScience+Fiction'));
+  });
 
   it('combines q and category in the Google Books query', async () => {
     mockFetchSuccess([makeFakeItem('h1', 'Cosmos')], 1);
