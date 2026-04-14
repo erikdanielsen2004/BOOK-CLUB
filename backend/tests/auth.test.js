@@ -147,18 +147,23 @@ describe('POST /api/auth/login', () => {
     const res = await request(app).post('/api/auth/login').send({
       email: 'login@example.com',
       password: 'Password1!',
-      confirmPassword: 'Password1!',
     });
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.user.email).toBe('login@example.com');
   });
 
-  it('returns 400 when a required field is missing', async () => {
+  it('returns 400 when email is missing', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      password: 'Password1!',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/required/i);
+  });
+
+  it('returns 400 when password is missing', async () => {
     const res = await request(app).post('/api/auth/login').send({
       email: 'login@example.com',
-      password: 'Password1!',
-      // confirmPassword missing
     });
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/required/i);
@@ -168,7 +173,6 @@ describe('POST /api/auth/login', () => {
     const res = await request(app).post('/api/auth/login').send({
       email: 'login@example.com',
       password: 'WrongPass9!',
-      confirmPassword: 'WrongPass9!',
     });
     expect(res.status).toBe(401);
   });
@@ -177,13 +181,11 @@ describe('POST /api/auth/login', () => {
     const res = await request(app).post('/api/auth/login').send({
       email: 'nobody@example.com',
       password: 'Password1!',
-      confirmPassword: 'Password1!',
     });
     expect(res.status).toBe(401);
   });
 
   it('returns 401 when the user has not verified their email', async () => {
-    await createVerifiedUser.constructor; // just making a new unverified user
     const unverified = await User.create({
       firstName: 'Un', lastName: 'Verified',
       email: 'unverified@example.com',
@@ -194,7 +196,6 @@ describe('POST /api/auth/login', () => {
     const res = await request(app).post('/api/auth/login').send({
       email: 'unverified@example.com',
       password: 'Password1!',
-      confirmPassword: 'Password1!',
     });
     expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/verify/i);

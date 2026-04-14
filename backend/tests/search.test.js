@@ -1,5 +1,4 @@
 /**
- * search.test.js
  * Tests for GET /api/search/books
  *
  * node-fetch is mocked so tests never hit the real Google Books API.
@@ -12,11 +11,11 @@ const request = require('supertest');
 const fetch = require('node-fetch');
 const app = require('./helpers/testApp');
 
-// No db.connect/disconnect here — search has no DB dependency.
-// jest.clearAllMocks() between tests keeps fetch mock calls isolated.
+// No db.connect/disconnect here — search has no DB dependency
+// jest.clearAllMocks() between tests keeps fetch mock calls isolated
 afterEach(() => jest.clearAllMocks());
 
-/** Helper: build a fake Google Books API item */
+// Helper - build a fake Google Books API item
 function makeFakeItem(id, title, authors = ['Author A'], categories = ['Fiction']) {
   return {
     id,
@@ -34,7 +33,7 @@ function makeFakeItem(id, title, authors = ['Author A'], categories = ['Fiction'
   };
 }
 
-/** Helper: configure fetch mock to return a successful Google Books response */
+// Helper - configure fetch mock to return a successful Google Books response
 function mockFetchSuccess(items = [], totalItems = items.length) {
   fetch.mockResolvedValue({
     ok: true,
@@ -43,7 +42,7 @@ function mockFetchSuccess(items = [], totalItems = items.length) {
   });
 }
 
-/** Helper: configure fetch mock to return a Google API error */
+// Helper - configure fetch mock to return a Google API error
 function mockFetchError(status = 400, message = 'Bad Request') {
   fetch.mockResolvedValue({
     ok: false,
@@ -52,7 +51,6 @@ function mockFetchError(status = 400, message = 'Bad Request') {
   });
 }
 
-// ---------------------------------------------------------------------------
 describe('GET /api/search/books', () => {
   it('returns 400 when neither q nor category is provided', async () => {
     const res = await request(app).get('/api/search/books');
@@ -93,7 +91,7 @@ describe('GET /api/search/books', () => {
     expect(res.status).toBe(200);
     expect(res.body.books[0].categories).toContain('Science Fiction');
     // The URL sent to Google should include a subject: filter
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('subject%3AScience+Fiction'));
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('subject%3AScience%20Fiction'));
   });
 
   it('combines q and category in the Google Books query', async () => {
