@@ -8,5 +8,5 @@ module.exports = {
   // Ensure Jest exits cleanly after all async work
   forceExit: true,
   // Run suites serially so each suite gets a clean DB state
-  runInBand: false,
+  // runInBand: false,
 };
