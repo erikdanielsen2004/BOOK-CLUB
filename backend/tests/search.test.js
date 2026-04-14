@@ -52,6 +52,9 @@ function mockFetchError(status = 400, message = 'Bad Request') {
 }
 
 describe('GET /api/search/books', () => {
+  beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => { }));
+  afterEach(() => jest.restoreAllMocks());
+
   it('returns 400 when neither q nor category is provided', async () => {
     const res = await request(app).get('/api/search/books');
     expect(res.status).toBe(400);

@@ -19,6 +19,9 @@ afterAll(db.disconnect);
 
 // POST /api/reset/send-reset-email
 describe('POST /api/reset/send-reset-email', () => {
+  beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => { }));
+  afterEach(() => jest.restoreAllMocks());
+
   it('returns 200 for a valid, verified email', async () => {
     await createVerifiedUser({ email: 'verified@example.com' });
 
