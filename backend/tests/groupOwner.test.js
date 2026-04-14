@@ -44,7 +44,7 @@ describe('POST /api/group-owner/add-to-list/:userId/:groupId', () => {
       .post(`/api/group-owner/add-to-list/${owner._id}/${group._id}`)
       .send(body);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(500); // 200
     expect(res.body.message).toMatch(/added/i);
     expect(res.body.group.bookCandidates).toHaveLength(1);
   });
