@@ -19,9 +19,6 @@ afterAll(db.disconnect);
 
 // POST /api/reset/send-reset-email
 describe('POST /api/reset/send-reset-email', () => {
-  beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => { }));
-  afterEach(() => jest.restoreAllMocks());
-
   it('returns 200 for a valid, verified email', async () => {
     await createVerifiedUser({ email: 'verified@example.com' });
 
@@ -70,9 +67,11 @@ describe('POST /api/reset/reset-password/:token', () => {
   let user, validToken;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => { });
     user = await createVerifiedUser({ email: 'reset@example.com' });
     validToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
   });
+  afterEach(() => jest.restoreAllMocks());
 
   it('returns 200 and updates the password with a valid token', async () => {
     const res = await request(app)
