@@ -6,7 +6,5 @@ module.exports = {
   // MongoMemoryReplSet can be slow to spin up
   testTimeout: 30000,
   // Ensure Jest exits cleanly after all async work
-  forceExit: true,
-  // Run suites serially so each suite gets a clean DB state
-  runInBand: false,
+  forceExit: true
 };
